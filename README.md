@@ -57,6 +57,8 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 - My plan: personal best (with the zone cut-offs computed live), green / yellow / red text, pre-exercise medicine, doctor's phone, known triggers
 - Insights: model status, explanation for tomorrow, learned weights, held-out evaluation, recent history
 - **Add to calendar** (.ics all-day event for tomorrow with the plan text) and **Print plan**
+- **Share with coach or nurse**: one tap turns tomorrow's card into a plain-text note (date, place, AQI and category, the EPA/NHLBI lines, the user's own pre-exercise text, the not-medical-advice and 911 lines). Uses the phone's share sheet when there is one, otherwise copies to the clipboard; the note stays on screen to edit first
+- When there's no pollen forecast (all U.S. locations), a pollen level logged in today's check-in is carried to tomorrow's card and the model's explanation, and labelled "today's logged count" so it is never mistaken for a forecast
 - English / Español (all UI strings; a test checks every key and placeholder)
 - Export data as JSON; delete everything in one tap
 - Clear error when the forecast can't load (e.g. Open-Meteo's daily rate limit), with the last saved forecast kept
@@ -78,13 +80,13 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 ## Tests
 
 ```bash
-node --test tests/*.test.js                          # 42 unit tests: AQI math, zones, forecast parsing, model, guidance, i18n, .ics
-CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 52 headless-Chromium checks (pip install playwright)
+node --test tests/*.test.js                          # 44 unit tests: AQI math, zones, forecast parsing, model, guidance, i18n, .ics, share note
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 58 headless-Chromium checks (pip install playwright)
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```
 
 - Unit tests use EPA's own worked example (8-h ozone 0.07853333 ppm → AQI 126), every breakpoint edge, and the saved real Open-Meteo response.
-- The e2e test routes Open-Meteo calls to the fixtures and checks real flows: tomorrow's AQI 140 / orange card, the user's pre-exercise text appearing on a USG day, check-in zones (75 % → yellow, danger sign → red + 911), demo model recovering the planted pattern, .ics download, Spanish, persistence across reload, labels and accessible names, no horizontal overflow at 390 px, 40 px+ touch targets, no JS errors, no network calls except Open-Meteo, and the API-failure message.
+- The e2e test routes Open-Meteo calls to the fixtures and checks real flows: tomorrow's AQI 140 / orange card, the user's pre-exercise text appearing on a USG day, check-in zones (75 % → yellow, danger sign → red + 911), demo model recovering the planted pattern, .ics download, the coach/nurse share note, the labelled logged-pollen carry-over, Spanish, persistence across reload, labels and accessible names, no horizontal overflow at 390 px, 40 px+ touch targets, no JS errors, no network calls except Open-Meteo, and the API-failure message.
 
 ## Files
 
@@ -98,9 +100,11 @@ js/guidance.js      which cited guidance lines apply
 js/model.js         on-device logistic regression + explanations + evaluation
 js/demo.js          seeded SYNTHETIC demo generator
 js/ics.js           calendar export
+js/share.js         plain-text note for a coach / school nurse
 js/i18n.js          English / Spanish strings
 js/app.js           UI wiring, localStorage
 tests/              node unit tests, Playwright e2e, real API fixtures
+onepager.pdf        one-page project description (DSH Hacks submission)
 ```
 
 ## Limits
