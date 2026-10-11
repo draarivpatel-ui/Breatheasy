@@ -144,12 +144,37 @@
     return { status: 'ready', model: model, weights: weights(model), evaluation: evaluate(data, opts), days: data.length, rough: pos, good: neg };
   }
 
+  /** "Explain this day": feature-by-feature breakdown for one past check-in.
+   *  - now: the current model (trained on every logged day, this one included) split into
+   *    bias + per-feature contributions in log-odds, each also shown as an odds multiplier.
+   *  - before: what a model trained ONLY on the days before this one would have said (null when
+   *    there were not yet enough earlier days). This is the honest "would it have seen it coming" view. */
+  function explainDay(entries, date, opts) {
+    var data = rows(entries);
+    var idx = -1;
+    for (var i = 0; i < data.length; i++) if (data[i].date === date) { idx = i; break; }
+    if (idx === -1) return null;
+    var all = train(entries, opts);
+    if (all.status !== 'ready') return { date: date, status: 'insufficient', actual: data[idx].y };
+    var pr = predict(all.model, data[idx].x);
+    var contributions = pr.contributions.map(function (c) {
+      return { feature: c.feature, key: c.key, value: c.value, contribution: c.contribution, oddsRatio: Math.exp(c.contribution) };
+    });
+    var earlier = data.slice(0, idx), before = null;
+    var ePos = earlier.reduce(function (a, d) { return a + d.y; }, 0);
+    if (earlier.length >= MIN_DAYS && ePos >= MIN_EACH_CLASS && earlier.length - ePos >= MIN_EACH_CLASS) {
+      before = { p: predict(fit(earlier, opts), data[idx].x).p, trainedDays: earlier.length };
+    }
+    return { date: date, status: 'ready', actual: data[idx].y, p: pr.p, bias: all.model.b,
+      baseP: sigmoid(all.model.b), contributions: contributions, before: before };
+  }
+
   /** Risk band for display. Bands are a BreatheEasy design choice, not clinical thresholds. */
   function band(p) { return p >= 0.6 ? 'high' : p >= 0.35 ? 'elevated' : 'low'; }
 
   var api = {
     FEATURES: FEATURES, MIN_DAYS: MIN_DAYS, sigmoid: sigmoid, label: label, rows: rows, prevDate: prevDate,
-    scaler: scaler, fit: fit, predict: predict, weights: weights, evaluate: evaluate, train: train, band: band
+    scaler: scaler, fit: fit, predict: predict, weights: weights, evaluate: evaluate, train: train, band: band, explainDay: explainDay
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BE_Model = api;
