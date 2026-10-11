@@ -33,7 +33,7 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 
 ## How it works
 
-1. **Forecast** – [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) (Copernicus CAMS model; free, no API key, CORS enabled) for hourly PM2.5, ozone, US AQI and pollen; [Open-Meteo Weather API](https://open-meteo.com/en/docs) for daily high temperature and humidity. Both URLs were verified on 2026-10-10 for Sugar Land, TX; the saved responses are the test fixtures.
+1. **Forecast** – [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) (Copernicus CAMS model; free, no API key, CORS enabled) for hourly PM2.5, ozone, US AQI and pollen; [Open-Meteo Weather API](https://open-meteo.com/en/docs) for daily high temperature and humidity. Both URLs were verified on 2026-10-10 for Sugar Land, TX; the saved responses are the test fixtures. Any-city search uses the [Open-Meteo Geocoding API](https://open-meteo.com/en/docs/geocoding-api) (GeoNames data; verified 2026-10-11, saved "London" answer is a fixture).
 2. **Daily AQI, EPA method** (`js/aqi.js`, `js/forecast.js`)
    - PM2.5: 24-hour mean (needs ≥ 18 of 24 hours), truncated to 0.1 µg/m³.
    - Ozone: highest 8-hour running mean that begins during the day (needs ≥ 6 of 8 hours), converted µg/m³ → ppm at 25 °C (`ppb = µg/m³ × 24.45 / 48.00`), truncated to 0.001 ppm.
@@ -72,7 +72,8 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 
 - Tomorrow card with AQI badge in EPA colors, category, main pollutant, ozone ppb, PM2.5 µg/m³, pollen, high temperature
 - 4-day strip (today + 3)
-- Locations: Sugar Land, Houston, Pasadena, or device geolocation
+- Locations: Sugar Land, Houston, Pasadena, device geolocation, or **any city in the world** by name (Open-Meteo Geocoding API, free, no key; biggest matches first, up to 5 choices; the choice is remembered on this device). The AQI is always computed with the U.S. EPA method, wherever the city is
+- **One-tap AI preview**: on a first visit the personal-outlook box on the Air card offers *See it work on SYNTHETIC demo data*, so the model's outlook appears right on tomorrow's card (with a purple SYNTHETIC tag) without opening Insights; *Remove demo data* in Insights takes it away
 - Daily check-in → zone, % of personal best, your plan's steps for that zone, 911 / doctor call buttons
 - My plan: personal best (with the zone cut-offs computed live), green / yellow / red text, pre-exercise medicine, doctor's phone, known triggers
 - Insights: model status, explanation for tomorrow, learned weights, held-out evaluation with Brier score, recent history
@@ -110,11 +111,11 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 10, 2026: **58/58 unit tests and 83/83 end-to-end checks passing**.
+Last run Oct 11, 2026: **63/63 unit tests and 99/99 end-to-end checks passing**.
 
 ```bash
-node --test tests/*.test.js                          # 58 unit tests: AQI math, zones, forecast parsing, model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note
-CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 83 headless-Chromium checks (pip install playwright)
+node --test tests/*.test.js                          # 63 unit tests: AQI math, zones, forecast parsing, model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels)
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 99 headless-Chromium checks (pip install playwright)
 node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```
@@ -139,6 +140,7 @@ manifest.webmanifest, icons/   install metadata + app icons
 scripts/stamp.js    writes the content hash into sw.js and index.html
 js/ics.js           calendar export
 js/share.js         plain-text note for a coach / school nurse
+js/places.js        any-city search (Open-Meteo Geocoding): URL, ranking, labels
 js/i18n.js          English / Spanish strings
 js/app.js           UI wiring, localStorage
 tests/              node unit tests, Playwright e2e, real API fixtures
