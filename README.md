@@ -79,7 +79,8 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 - Insights: model status, explanation for tomorrow, learned weights, held-out evaluation with Brier score, recent history
 - **Explain a past day**: feature-by-feature breakdown for any logged day, plus what the model would have said using only earlier days
 - **How much can you trust it?** SYNTHETIC calibration (reliability plot + Brier) and a sensitivity curve of accuracy vs. number of logged days
-- **Installable and offline (PWA)**: `manifest.webmanifest` + `sw.js`. Add it to the home screen; with no signal it still opens, and it shows the last saved forecast with an "You're offline" note. Cache-busting: `node scripts/stamp.js` writes a content hash into `sw.js` and every `?v=` in `index.html`, so each deploy gets fresh URLs and a fresh cache (old caches are deleted; a unit test fails if the stamp is stale). Pages are network-first; the forecast APIs are never cached by the service worker
+- **Installable and offline (PWA)**: `manifest.webmanifest` + `sw.js`. Add it to the home screen; with no signal it still opens, and it shows the last saved forecast with a "You're offline" note and its age. Cache-busting: `node scripts/stamp.js` writes a content hash into `sw.js` and every `?v=` in `index.html`, so each deploy gets fresh URLs and a fresh cache (old caches are deleted; a unit test fails if the stamp is stale). Pages are network-first; the forecast APIs are never cached by the service worker
+- **Rate limits and outages (429)**: `js/fccache.js` keeps the last good forecast for each place in localStorage. For 30 minutes it is reused without a new request (Refresh forces one), which also keeps the app under Open-Meteo's rate limit. If Open-Meteo returns 429 or fails, the saved answer is shown for up to 3 hours with an honest "as of N min ago" label ("de hace N min" in Spanish). Past 3 hours, or with nothing saved, the app says plainly that there is no air-quality data right now, and it never shows another city's forecast.
 - **Add to calendar** (.ics all-day event for tomorrow with the plan text) and **Print plan**
 - **Share with coach or nurse**: one tap turns tomorrow's card into a plain-text note (date, place, AQI and category, the EPA/NHLBI lines, the user's own pre-exercise text, the not-medical-advice and 911 lines). Uses the phone's share sheet when there is one, otherwise copies to the clipboard; the note stays on screen to edit first
 - When there's no pollen forecast (all U.S. locations), a pollen level logged in today's check-in is carried to tomorrow's card and the model's explanation, and labelled "today's logged count" so it is never mistaken for a forecast
@@ -111,17 +112,17 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 11, 2026: **63/63 unit tests and 99/99 end-to-end checks passing**.
+Last run Oct 11, 2026: **77/77 unit tests and 108/108 end-to-end checks passing**.
 
 ```bash
-node --test tests/*.test.js                          # 63 unit tests: AQI math, zones, forecast parsing, model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels)
-CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 99 headless-Chromium checks (pip install playwright)
+node --test tests/*.test.js                          # 77 unit tests: AQI math, zones, forecast parsing, per-place forecast cache (429 fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels)
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 108 headless-Chromium checks (pip install playwright)
 node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```
 
 - Unit tests use EPA's own worked example (8-h ozone 0.07853333 ppm → AQI 126), every breakpoint edge, and the saved real Open-Meteo response.
-- The e2e test routes Open-Meteo calls to the fixtures and checks real flows: tomorrow's AQI 140 / orange card, the user's pre-exercise text appearing on a USG day, check-in zones (75 % → yellow, danger sign → red + 911), demo model recovering the planted pattern, .ics download, the coach/nurse share note, the labelled logged-pollen carry-over, Spanish, persistence across reload, labels and accessible names, no horizontal overflow at 390 px, 40 px+ touch targets, no JS errors, no network calls except Open-Meteo, and the API-failure message. It also checks the explain-a-day view (8 rows, odds multipliers, the "before" prediction, Explain buttons), the SYNTHETIC trust card (reliability plot, 6-size sensitivity table, Brier line), and, over a local http server, the installable/offline flow: manifest served, service worker in control, one cache named with the current hash, no forecast API cached, and an offline reload that still renders tomorrow's card with the offline note.
+- The e2e test routes Open-Meteo calls to the fixtures and checks real flows: tomorrow's AQI 140 / orange card, the user's pre-exercise text appearing on a USG day, check-in zones (75 % → yellow, danger sign → red + 911), demo model recovering the planted pattern, .ics download, the coach/nurse share note, the labelled logged-pollen carry-over, Spanish, persistence across reload, labels and accessible names, no horizontal overflow at 390 px, 40 px+ touch targets, no JS errors, no network calls except Open-Meteo, and the API-failure message. It also checks the explain-a-day view (8 rows, odds multipliers, the "before" prediction, Explain buttons), the SYNTHETIC trust card (reliability plot, 6-size sensitivity table, Brier line), and, over a local http server, the installable/offline flow: manifest served, service worker in control, one cache named with the current hash, no forecast API cached, and an offline reload that still renders tomorrow's card with the offline note. A 429 section answers Open-Meteo with "rate limit exceeded" after a good load and checks the saved forecast stays on screen labelled "as of 45 min ago" / "de hace 45 min", then that a 3 h 15 min old copy is dropped for a clear no-data message.
 
 ## Files
 
@@ -130,6 +131,7 @@ index.html          markup (EN + ES about text)
 styles.css          styles, mobile-first, print stylesheet
 js/aqi.js           EPA AQI breakpoints + math
 js/forecast.js      Open-Meteo fetch + daily EPA-method summaries
+js/fccache.js       per-place forecast cache: 30 min fresh, 3 h fallback on 429/outage, "as of" age
 js/zones.js         NHLBI action-plan zones
 js/guidance.js      which cited guidance lines apply
 js/model.js         on-device logistic regression + explanations + evaluation
