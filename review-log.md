@@ -39,3 +39,21 @@ GitHub Pages is still not enabled (see registry), so the PWA can't be installed 
 | Tests | New unit test guards the CDC/AirNow terms and retired words; e2e checks the Spanish share note. `node --test` **58/58**, e2e **83/83**. Stamp `be-717dc65895`. |
 
 Not done: GitHub Pages still not enabled.
+
+## Cycle 3 · Sun Oct 11, 2026, ~11:15 AM ET (strict-judge review against the DSH Hacks V2 rubric)
+
+Rubric (dsh-hacks-v2.devpost.com): Idea (theme fit, innovation, impact if deployed), Implementation (does it work, technical challenge), Design (UX, interface), Presentation (problem clearly defined and addressed).
+
+Judge's-eye gaps, ranked:
+1. **Impact / Implementation:** a global, online event with judges outside Texas, but the app only offered Sugar Land, Houston, Pasadena or browser geolocation (often denied in judging setups). A judge could not see *their own* city's tomorrow card.
+2. **Presentation / Idea:** the AI is the headline, but a first visit shows "Log at least 14 days…" on the Air card; the demo button lived only in Insights, so a 2-minute judge may never see the model's outlook on tomorrow's card.
+3. (Not fixable by Hark) GitHub Pages still off, so the README "Live demo" link 404s. Aariv must switch it on (AARIV-TODO).
+
+| Shipped | Detail |
+|---|---|
+| Any-city search (`js/places.js`, Air tab) | "Or find any city" box → Open-Meteo Geocoding API (free, no key, CORS; verified 2026-10-11). Up to 5 choices, biggest place first, labelled "City, Region, Country"; one match is picked directly. The chosen city joins the Location menu and persists. Clear messages for no match and for a search outage (keeps the current city), 8 s timeout. EN + ES. Service worker precaches the new file; stamp `be-102b11e056`. |
+| One-tap AI preview on the Air card | When the model isn't ready and no demo is loaded, the personal-outlook box shows **See it work on SYNTHETIC demo data**. One tap loads the same seeded 75-day synthetic set as Insights, the outlook shows its band + % with a purple **SYNTHETIC demo data** pill (replaces the old "(demo)" suffix), and focus moves to the result. Removing demo data in Insights brings the button back. |
+
+Checks: `node --test tests/*.test.js` 58 → **63/63** (new `tests/places.test.js`: URL encoding/language, ranking on a real saved "London" answer, malformed input, labels, EN/ES strings). `CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py` 83 → **99/99** (new 390 px flow: demo button → band + SYNTHETIC tag → removable; London search → 5 choices → forecast fetched at lat 51.5085 → persists after reload; no-match and 503 messages; Spanish labels; back to a preset city; no overflow; 44 px targets; no JS errors). Screenshot `tests/screenshots/place-search.png` reviewed.
+
+Not changed: Devpost draft (untouched), onepager.pdf (doesn't mention city search yet), gallery images.
