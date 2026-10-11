@@ -85,7 +85,7 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 - **Add to calendar** (.ics all-day event for tomorrow with the plan text) and **Print plan**
 - **Share with coach or nurse**: one tap turns tomorrow's card into a plain-text note (date, place, AQI and category, the EPA/NHLBI lines, the user's own pre-exercise text, the not-medical-advice and 911 lines). Uses the phone's share sheet when there is one, otherwise copies to the clipboard; the note stays on screen to edit first
 - When there's no pollen forecast (all U.S. locations), a pollen level logged in today's check-in is carried to tomorrow's card and the model's explanation, and labelled "today's logged count" so it is never mistaken for a forecast
-- English / Español (all UI strings; a test checks every key and placeholder). Spanish medical terms follow the CDC *Plan de acción para el control del asma* (sibilancias, dificultad para respirar, alivio rápido, signos de peligro, mejor puntuación), NHLBI's Spanish asthma pages (opresión en el pecho, desencadenantes) and AirNow español for AQI categories (Insalubre para grupos sensibles / Insalubre / Muy insalubre); a test guards against the retired terms. An open share note re-writes itself when you switch language, unless you have edited it.
+- English / Español (all UI strings; a test checks every key and placeholder, and that no English is copied into the Spanish strings apart from proper nouns and URLs; the e2e run checks the city-search, SYNTHETIC demo, 8 s timeout, offline and saved-forecast messages in Spanish at 390 px). Spanish medical terms follow the CDC *Plan de acción para el control del asma* (sibilancias, dificultad para respirar, alivio rápido, signos de peligro, mejor puntuación), NHLBI's Spanish asthma pages (opresión en el pecho, desencadenantes) and AirNow español for AQI categories (Insalubre para grupos sensibles / Insalubre / Muy insalubre); a test guards against the retired terms. An open share note re-writes itself when you switch language, unless you have edited it.
 - Export data as JSON; delete everything in one tap
 - Clear error when the forecast can't load (e.g. Open-Meteo's daily rate limit), with the last saved forecast kept
 
@@ -113,11 +113,11 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 11, 2026: **87/87 unit tests and 120/120 end-to-end checks passing**.
+Last run Oct 11, 2026: **92/92 unit tests and 127/127 end-to-end checks passing**.
 
 ```bash
-node --test tests/*.test.js                          # 87 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels)
-CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 120 headless-Chromium checks (pip install playwright)
+node --test tests/*.test.js                          # 92 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels), EN/ES key parity (same keys and placeholders, no English copied into Spanish)
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 127 headless-Chromium checks (pip install playwright)
 node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```
