@@ -36,6 +36,7 @@
   var fcError = null;
   var fcSeq = 0;       // ignore answers for a place the user has already left
   var explainDate = null; // day picked in "Explain a past day"
+  var trustWaiting = false;
   var trustResult = null; // SYNTHETIC model check, computed once (it never uses the user's data)
 
   // Allow a fixed "today" for demos/tests: ?today=YYYY-MM-DD
@@ -503,7 +504,17 @@
     $('#trust-intro').textContent = t('trust_intro', { people: o.seeds.length, days: o.seriesDays, test: o.testDays });
     if (!trustResult) {
       st.textContent = t('trust_running');
-      setTimeout(function () { trustResult = V.run(); renderTrust(); }, 0);
+      var go = function () { if (trustResult) return; trustResult = V.run(); renderTrust(); };
+      if (trustWaiting) return;
+      var host = $('#trust-status');
+      if ('IntersectionObserver' in window && host) {
+        trustWaiting = true;
+        var io = new IntersectionObserver(function (es) {
+          if (es.some(function (e) { return e.isIntersecting; })) { io.disconnect(); trustWaiting = false; setTimeout(go, 0); }
+        }, { rootMargin: '800px 0px' });
+        io.observe(host);
+        window.addEventListener('beforeprint', function () { go(); });
+      } else { setTimeout(go, 0); }
       return;
     }
     st.textContent = '';
