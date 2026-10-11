@@ -108,6 +108,12 @@ with sync_playwright() as p:
     pg.uncheck('input[name="sym"][value="blue_lips"]')
     check('history shows one entry (same date overwritten)', pg.locator('#history li.h-item').count() == 1)
 
+    # logged pollen carries into tomorrow's card, labelled as a logged count (no US pollen forecast)
+    pg.select_option('#ci-pollen', '3')
+    pg.click('#ci-form button[type=submit]')
+    check("tomorrow's pollen shows today's logged count, labelled", "High (today\u2019s logged count)" in pg.inner_text('#pc-facts'), pg.inner_text('#pc-facts'))
+    check('still one entry after re-saving today', pg.locator('#history li.h-item').count() == 1)
+
     # insights with synthetic demo
     pg.click('#demo-toggle')
     pg.wait_for_selector('#weights:not([hidden])')
@@ -127,6 +133,15 @@ with sync_playwright() as p:
         pg.click('#ics')
     ics = pathlib.Path(dl.value.path()).read_text()
     check('.ics has tomorrow as all-day event', 'DTSTART;VALUE=DATE:20261010' in ics and 'AQI 140' in ics, ics[:300])
+
+    # share note for a coach / school nurse
+    pg.click('#share')
+    pg.wait_for_selector('#share-box:not([hidden])')
+    note = pg.input_value('#share-text')
+    check('share note: date, place, AQI 140 + category', 'Saturday, October 10' in note and 'Sugar Land' in note and 'AQI 140, Unhealthy for sensitive groups' in note, note[:200])
+    check("share note carries the user's own pre-exercise text", '15 minutes before practice' in note, note)
+    check('share note ends with not-medical-advice + 911 line', 'Not medical advice' in note and 'Call 911' in note)
+    check('share gives feedback (copied or select-to-copy)', pg.inner_text('#share-msg').strip() != '', pg.inner_text('#share-msg'))
 
     # Spanish
     pg.select_option('#lang', 'es')
