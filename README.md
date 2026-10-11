@@ -1,0 +1,126 @@
+# BreatheEasy 🫁
+
+**Your asthma action plan, matched to tomorrow's air.**
+
+BreatheEasy puts two things that usually live apart on one screen: the **asthma action plan** a doctor gives a family (green / yellow / red zones) and **tomorrow's ozone, particle-pollution and pollen forecast** for where you live. Each evening it tells you:
+
+- **Tomorrow's air**: the day's U.S. AQI, computed from the forecast with EPA's own breakpoints, its category, and the pollutant driving it
+- **What to do**: EPA's advice for that AQI level for people with asthma, with **your doctor's own words** from your plan beside it (for example, your pre-exercise medicine on an orange ozone day)
+- **Your personal outlook**: a small model that learns, **on your device**, which conditions tend to come before *your* rough days, and explains every prediction
+- **Which zone you're in today**: a 20-second check-in (peak flow and/or symptoms) that sorts you into your plan's zone, shows that zone's steps, and puts a **Call 911** button in front of you on danger signs
+
+English and Spanish. Works on phones. No account, no server, no tracking: everything stays in your browser.
+
+Built for **DSH Hacks V2** (theme: AI × Healthcare).
+
+> ⚠️ **Not medical advice.** BreatheEasy helps you follow the plan your doctor wrote. It does not diagnose, prescribe, or replace medical care. Trouble walking or talking from shortness of breath, or blue lips or fingernails: call 911.
+
+---
+
+## Why
+
+- About **4.8 million U.S. children (6.7%)** have asthma right now, and **47.1%** of children with asthma had at least one asthma attack in the past 12 months ([CDC, Most Recent National Asthma Data, 2023 NHIS](https://www.cdc.gov/asthma/most_recent_national_asthma_data.htm)).
+- The American Lung Association's *State of the Air 2026* ranks the **Houston-Pasadena metro 6th worst in the nation for ozone**; Harris County averaged **43.3 weighted unhealthy ozone days per year** in 2022–2024 ([ALA press release, Apr 21 2026](https://www.lung.org/media/press-releases/fy26-sota-texas)).
+- EPA lists **people with asthma** and **children and teenagers** among the groups most sensitive to ozone, and its advice for those days is literally "follow your asthma action plan and keep quick-relief medicine handy" ([EPA Air Quality Guide for Ozone](https://document.airnow.gov/air-quality-guide-for-ozone.pdf)).
+
+The plan is on paper in a drawer; the forecast is in a different app. BreatheEasy connects them the night before, when there's still time to move practice indoors or take the pre-exercise medicine the doctor already prescribed.
+
+## How it works
+
+1. **Forecast** – [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) (Copernicus CAMS model; free, no API key, CORS enabled) for hourly PM2.5, ozone, US AQI and pollen; [Open-Meteo Weather API](https://open-meteo.com/en/docs) for daily high temperature and humidity. Both URLs were verified on 2026-10-10 for Sugar Land, TX; the saved responses are the test fixtures.
+2. **Daily AQI, EPA method** (`js/aqi.js`, `js/forecast.js`)
+   - PM2.5: 24-hour mean (needs ≥ 18 of 24 hours), truncated to 0.1 µg/m³.
+   - Ozone: highest 8-hour running mean that begins during the day (needs ≥ 6 of 8 hours), converted µg/m³ → ppm at 25 °C (`ppb = µg/m³ × 24.45 / 48.00`), truncated to 0.001 ppm.
+   - Linear interpolation over the breakpoints in [40 CFR Part 58, App. G, Table 2](https://www.ecfr.gov/current/title-40/chapter-I/subchapter-C/part-58/appendix-Appendix%20G%20to%20Part%2058), including the **2024 PM2.5 update** (Good now ends at 9.0 µg/m³; [EPA fact sheet](https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf)). The day's AQI is the higher pollutant.
+   - Cross-check: on the real 2026-10-10 Sugar Land forecast, our method gives **140** (ozone 0.083 ppm); Open-Meteo's own peak hourly US AQI was **143**. The app shows both.
+3. **Zones** (`js/zones.js`) follow the [NHLBI Asthma Action Plan (2020)](https://www.nhlbi.nih.gov/sites/default/files/publications/Asthma-Action-Plan-2020_rev_508.pdf): green ≥ 80 % of personal-best peak flow, yellow 50–79 %, red < 50 %; the plan's yellow and red symptom lists; the worse of peak flow and symptoms wins; the plan's danger signs trigger a 911 alert.
+4. **Guidance** (`js/guidance.js`) picks lines from EPA's AQI guidance and NHLBI's trigger tips, plus the text **you** copied from your doctor's plan. The app never generates medication names, doses or treatment steps.
+5. **Pollen** – Open-Meteo's pollen forecast covers Europe only, so for U.S. locations the app says so plainly and lets you log the [Houston Health Department daily count](https://www.houstonhealth.org/services/pollen-mold) when you check in. Where grain counts exist they're bucketed with the National Allergy Bureau ranges (tree 15/90/1500, grass 5/20/200, weed 10/50/500 grains/m³; [table](https://forsyth.cc/eap/air_quality/pollen.aspx)).
+
+## How the AI works (and what it doesn't do)
+
+`js/model.js` is an **L2-regularised logistic regression** trained **in the browser** by gradient descent on your own check-ins. Nothing leaves the device.
+
+- **Label:** a day is "rough" if your check-in put you in the yellow or red zone.
+- **Features:** that day's ozone AQI, PM2.5 AQI, pollen level, high temperature, humidity, and whether the day before was rough. Features are standardised; missing values are imputed at the mean, so they contribute exactly zero.
+- **Explainable:** every prediction is broken into per-feature contributions (weight × standardised value) that add up exactly to the model's logit, so "Why tomorrow looks high" lists the real reasons. The Insights tab shows the learned weights as a bar chart plus an accessible table.
+- **Honest:** it refuses to predict until it has **14 days with at least 3 rough and 3 good days**. It reports accuracy on the **most recent 25 % of days it never trained on**, next to the "always guess the most common answer" baseline.
+- **Demo data is synthetic and labelled.** *Load synthetic demo data* (or `?demo=1`) generates 75 made-up days from a seeded random process in `js/demo.js` in which the invented person reacts to ozone, pollen and heat but not humidity. A purple banner says SYNTHETIC whenever it's shown. On that data the model ranks pollen and ozone as the top two links and scores 84 % held-out accuracy vs. a 68 % baseline (19 held-out days). That shows the pipeline works; it says nothing about real patients.
+- **Not a medical device.** It finds associations in one person's log; links are not proof of cause, and the risk bands (low < 35 % ≤ elevated < 60 % ≤ high) are a design choice, not clinical thresholds.
+
+## Features
+
+- Tomorrow card with AQI badge in EPA colors, category, main pollutant, ozone ppb, PM2.5 µg/m³, pollen, high temperature
+- 4-day strip (today + 3)
+- Locations: Sugar Land, Houston, Pasadena, or device geolocation
+- Daily check-in → zone, % of personal best, your plan's steps for that zone, 911 / doctor call buttons
+- My plan: personal best (with the zone cut-offs computed live), green / yellow / red text, pre-exercise medicine, doctor's phone, known triggers
+- Insights: model status, explanation for tomorrow, learned weights, held-out evaluation, recent history
+- **Add to calendar** (.ics all-day event for tomorrow with the plan text) and **Print plan**
+- English / Español (all UI strings; a test checks every key and placeholder)
+- Export data as JSON; delete everything in one tap
+- Clear error when the forecast can't load (e.g. Open-Meteo's daily rate limit), with the last saved forecast kept
+
+## Accessibility
+
+Semantic landmarks and headings, skip link, every control labelled, live regions for results, color never the only signal (every AQI color carries its category name; every zone its name), ≥ 44 px touch targets, visible focus rings, `prefers-reduced-motion` respected, `lang` switches with the language, chart mirrored by a data table for screen readers. Mobile-first and tested at 390 px.
+
+## Run it
+
+It's a static site: open `index.html`, or serve the folder:
+
+```bash
+python3 -m http.server 8000   # then http://localhost:8000
+```
+
+Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY-MM-DD` pins "today" (used by the tests).
+
+## Tests
+
+```bash
+node --test tests/*.test.js                          # 42 unit tests: AQI math, zones, forecast parsing, model, guidance, i18n, .ics
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 52 headless-Chromium checks (pip install playwright)
+LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
+```
+
+- Unit tests use EPA's own worked example (8-h ozone 0.07853333 ppm → AQI 126), every breakpoint edge, and the saved real Open-Meteo response.
+- The e2e test routes Open-Meteo calls to the fixtures and checks real flows: tomorrow's AQI 140 / orange card, the user's pre-exercise text appearing on a USG day, check-in zones (75 % → yellow, danger sign → red + 911), demo model recovering the planted pattern, .ics download, Spanish, persistence across reload, labels and accessible names, no horizontal overflow at 390 px, 40 px+ touch targets, no JS errors, no network calls except Open-Meteo, and the API-failure message.
+
+## Files
+
+```
+index.html          markup (EN + ES about text)
+styles.css          styles, mobile-first, print stylesheet
+js/aqi.js           EPA AQI breakpoints + math
+js/forecast.js      Open-Meteo fetch + daily EPA-method summaries
+js/zones.js         NHLBI action-plan zones
+js/guidance.js      which cited guidance lines apply
+js/model.js         on-device logistic regression + explanations + evaluation
+js/demo.js          seeded SYNTHETIC demo generator
+js/ics.js           calendar export
+js/i18n.js          English / Spanish strings
+js/app.js           UI wiring, localStorage
+tests/              node unit tests, Playwright e2e, real API fixtures
+```
+
+## Limits
+
+- Forecasts are model estimates (CAMS via Open-Meteo, ~11 km grid), not monitor readings. Official local forecasts and Ozone Action Days: [AirNow](https://www.airnow.gov/).
+- Ozone above 0.200 ppm (8-h) has no EPA 8-hour breakpoint; the app caps at 300 (Very Unhealthy).
+- No U.S. pollen forecast from a free, keyless, CORS-enabled source; pollen is user-logged for U.S. locations.
+- The model is only as good as the check-ins; with sparse logs it stays silent.
+
+## AI-assistance disclosure
+
+This project was built with help from an AI coding assistant (Hark), which drafted code, tests and copy under Aariv Patel's direction. Every statistic and guideline above was checked against the linked source pages.
+
+## Sources
+
+- NHLBI, [Asthma Action Plan](https://www.nhlbi.nih.gov/resources/asthma-action-plan-2020) (Dec 2020, NIH Pub. No. 20-HL-5251)
+- CDC, [Most Recent National Asthma Data](https://www.cdc.gov/asthma/most_recent_national_asthma_data.htm) (2023 NHIS; page updated Oct 6 2026)
+- American Lung Association, [State of the Air 2026 – Texas](https://www.lung.org/media/press-releases/fy26-sota-texas)
+- U.S. EPA, [40 CFR Part 58 App. G](https://www.ecfr.gov/current/title-40/chapter-I/subchapter-C/part-58/appendix-Appendix%20G%20to%20Part%2058), [AQI Basics](https://www.airnow.gov/aqi/aqi-basics/), [Air Quality Guide for Ozone](https://document.airnow.gov/air-quality-guide-for-ozone.pdf), [2024 PM AQI fact sheet](https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf)
+- Houston Health Department, [Pollen and Mold Reports](https://www.houstonhealth.org/services/pollen-mold)
+- Open-Meteo, [Air Quality API](https://open-meteo.com/en/docs/air-quality-api) (data: Copernicus CAMS, CC BY 4.0) and [Weather API](https://open-meteo.com/en/docs)
+
+MIT License.
