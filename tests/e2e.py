@@ -177,8 +177,10 @@ with sync_playwright() as p:
     # Spanish
     pg.select_option('#lang', 'es')
     check('html lang=es', pg.get_attribute('html', 'lang') == 'es')
-    check('Spanish category', pg.inner_text('#pc-cat') == 'Dañina para grupos sensibles', pg.inner_text('#pc-cat'))
-    check('Spanish model check + explain view', pg.inner_text('#trust h3') == '¿Cuánto puedes confiar en él?' and 'SINTÉTICA' in pg.inner_text('#trust .synth-tag') and 'Explicar' in pg.inner_text('#explain h3'))
+    check('Spanish category', pg.inner_text('#pc-cat') == 'Insalubre para grupos sensibles', pg.inner_text('#pc-cat'))
+    check('Spanish model check + explain view', pg.inner_text('#trust h3') == '¿Cuánto puedes confiar en el modelo?' and 'SINTÉTICA' in pg.inner_text('#trust .synth-tag') and 'Explicar' in pg.inner_text('#explain h3'))
+    es_note = pg.input_value('#share-text')
+    check('open share note switches to Spanish (CDC/AirNow terms)', 'Insalubre para grupos sensibles' in es_note and 'Nota de BreatheEasy' in es_note and 'alivio rápido' in es_note, es_note[:200])
     check('Spanish about block visible, English hidden', pg.is_visible('[data-only="es"]') and not pg.is_visible('[data-only="en"]'))
     pg.screenshot(path=str(SHOTS / 'desktop-es.png'), full_page=False)
     pg.select_option('#lang', 'en')
