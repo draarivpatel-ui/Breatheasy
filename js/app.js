@@ -104,13 +104,16 @@
     $('#place-msg').textContent = t('place_set', { place: p.name });
     fetchForecast();
   }
+  var placeSeq = 0;
   function onPlaceSearch(ev) {
     ev.preventDefault();
     var q = $('#place-q').value.trim(), ul = $('#place-results'), msg = $('#place-msg');
     ul.innerHTML = '';
     if (q.length < 2) { $('#place-q').focus(); return; }
     msg.textContent = t('place_searching');
+    var mySeq = ++placeSeq;
     P.search(q, state.lang).then(function (list) {
+      if (mySeq !== placeSeq) return;
       if (!list.length) { msg.textContent = t('place_none', { q: q }); return; }
       if (list.length === 1) { usePlace(list[0]); return; }
       msg.textContent = t('place_pick');
@@ -121,7 +124,10 @@
       });
       ul.querySelector('button').focus();
     }).catch(function (err) {
-      msg.textContent = t('place_error', { reason: (err && err.name === 'AbortError') ? 'timeout' : ((err && err.message) || 'network error'), place: placeName() });
+      if (mySeq !== placeSeq) return;
+      var off = typeof navigator.onLine === 'boolean' && !navigator.onLine;
+      var why = off ? t('reason_offline') : (err && err.name === 'AbortError') ? t('reason_timeout', { s: 8 }).replace('Open-Meteo', 'City search') : ((err && err.message) || 'network error');
+      msg.textContent = t('place_error', { reason: why, place: placeName() });
     });
   }
 
