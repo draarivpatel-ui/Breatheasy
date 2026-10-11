@@ -216,3 +216,10 @@ legend { font-weight: 700; padding: 0 6px; display: flex; align-items: center; g
 .tsvg .ln.best { stroke: var(--brand-2); stroke-dasharray: 6 4; }
 .tsvg .dot { fill: var(--accent); stroke: #fff; stroke-width: 1.5; }
 #rel-table th[scope="row"] { white-space: nowrap; }
+
+/* Windows High Contrast / forced-colors: keep focus and card edges visible */
+@media (forced-colors: active) {
+  .card { border: 1px solid CanvasText; }
+  :focus-visible { outline: 3px solid Highlight; outline-offset: 2px; }
+  button, select, input { border: 1px solid ButtonText; }
+}
