@@ -1,6 +1,6 @@
 # BreatheEasy 🫁
 
-**Live demo:** https://aariv.me/Breatheasy/ (goes live once GitHub Pages is switched on for this repo; until then, run it locally in one command, see [Run it](#run-it)). Add `?demo=1` for the labelled synthetic demo.
+**Live demo:** https://aariv.me/Breatheasy/ (GitHub Pages). Add `?demo=1` for the labelled synthetic demo, or run it locally in one command, see [Run it](#run-it).
 
 **Your asthma action plan, matched to tomorrow's air.**
 
@@ -22,6 +22,17 @@ Built for **DSH Hacks V2** (theme: AI × Healthcare).
 > ⚠️ **Not medical advice.** BreatheEasy helps you follow the plan your doctor wrote. It does not diagnose, prescribe, or replace medical care. Trouble walking or talking from shortness of breath, or blue lips or fingernails: call 911.
 
 ---
+
+## Judge it in 60 seconds
+
+1. Open **https://aariv.me/Breatheasy/** and search any city on the Air tab: tomorrow's AQI, the main pollutant and EPA's advice for it.
+2. Tap **See it work on SYNTHETIC demo data** (or open `?demo=1`) to see the personal outlook on clearly labelled SYNTHETIC data. Switch **EN / ES** at the top.
+3. Run the tests (Node 18+, no install):
+   ```bash
+   git clone https://github.com/draarivpatel-ui/Breatheasy && cd Breatheasy
+   npm test        # node --test; ends with "# pass 94" and "# fail 0"
+   ```
+   Optional: `python3 tests/e2e.py` (Playwright) runs 129 headless-Chromium checks against saved real API responses.
 
 ## Why
 
@@ -113,11 +124,11 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 11, 2026: **92/92 unit tests and 127/127 end-to-end checks passing**.
+Last run Oct 11, 2026: **94/94 unit tests and 129/129 end-to-end checks passing**. GitHub Actions (`.github/workflows/tests.yml`) runs both on every push to `main`.
 
 ```bash
-node --test tests/*.test.js                          # 92 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels), EN/ES key parity (same keys and placeholders, no English copied into Spanish)
-CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 127 headless-Chromium checks (pip install playwright)
+node --test tests/*.test.js                          # 94 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels), EN/ES key parity (same keys and placeholders, no English copied into Spanish)
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 129 headless-Chromium checks (pip install playwright)
 node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```
@@ -156,7 +167,6 @@ onepager.pdf        one-page project description (DSH Hacks submission)
 - Ozone above 0.200 ppm (8-h) has no EPA 8-hour breakpoint; the app caps at 300 (Very Unhealthy).
 - No U.S. pollen forecast from a free, keyless, CORS-enabled source; pollen is user-logged for U.S. locations.
 - The model is only as good as the check-ins; with sparse logs it stays silent. Its calibration and sensitivity numbers come from SYNTHETIC people with a planted pattern, not from patients.
-- There is no hosted demo yet: GitHub Pages still has to be enabled for this repo.
 - Offline mode shows the last forecast saved on this device; it cannot get a new forecast without a connection.
 
 ## AI-assistance disclosure
