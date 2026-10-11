@@ -20,8 +20,10 @@
     var d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10);
   }
 
-  /** endDate: last day (ISO). days: how many. personalBest: peak-flow best for the demo person. */
-  function generate(endDate, days, personalBest, seed) {
+  /** endDate: last day (ISO). days: how many. personalBest: peak-flow best for the demo person.
+   *  withTruth: also attach `trueP`, the hidden probability the generator used for that day. Only the
+   *  SYNTHETIC model check uses it (as the best score any model could get); the app's demo never does. */
+  function generate(endDate, days, personalBest, seed, withTruth) {
     var rnd = mulberry32(seed == null ? 42 : seed);
     days = days || 75; personalBest = personalBest || 400;
     var out = [], prevBad = 0;
@@ -45,6 +47,7 @@
         symptoms: symptoms, zone: zone, reliever: zone !== 'green',
         aqiO3: aqiO3, aqiPM25: aqiPM25, pollenLevel: pollenLevel, tempMaxF: tempMaxF, humidity: humidity
       });
+      if (withTruth) out[out.length - 1].trueP = p;
       prevBad = bad && zone !== 'green' ? 1 : 0;
     }
     return out;
