@@ -130,12 +130,24 @@
     });
   }
 
+  /** GET JSON. A failed call throws an Error with .status (HTTP code, 0 for network) and .rateLimited (429).
+   *  Open-Meteo puts its reason in the body ({"error":true,"reason":"..."}); a non-JSON body is tolerated. */
   function fetchJson(url, fetchImpl) {
     return (fetchImpl || fetch)(url).then(function (r) {
-      return r.json().then(function (j) {
-        if (!r.ok || j.error) throw new Error((j && j.reason) || ('HTTP ' + r.status));
+      var body = typeof r.text === 'function'
+        ? r.text().then(function (txt) { try { return JSON.parse(txt); } catch (e) { return null; } })
+        : r.json().catch(function () { return null; });
+      return body.then(function (j) {
+        if (!r.ok || !j || j.error) {
+          var err = new Error((j && j.reason) || ('HTTP ' + r.status));
+          err.status = r.status || 0; err.rateLimited = r.status === 429;
+          throw err;
+        }
         return j;
       });
+    }, function (e) {
+      var err = new Error((e && e.message) || 'network error'); err.status = 0; err.rateLimited = false;
+      throw err;
     });
   }
 
@@ -150,7 +162,7 @@
 
   var api = {
     aqUrl: aqUrl, wxUrl: wxUrl, maxOzone8h: maxOzone8h, dailyAirQuality: dailyAirQuality,
-    pollenLevel: pollenLevel, mergeDays: mergeDays, load: load, POLLEN_VARS: POLLEN_VARS
+    pollenLevel: pollenLevel, mergeDays: mergeDays, fetchJson: fetchJson, load: load, POLLEN_VARS: POLLEN_VARS
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BE_Forecast = api;
