@@ -181,3 +181,38 @@ legend { font-weight: 700; padding: 0 6px; display: flex; align-items: center; g
   .card { box-shadow: none; border: 1px solid #999; }
   a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; }
 }
+
+/* explain a past day */
+.btn-mini { margin-left: auto; min-height: 40px; padding: 6px 12px; font-size: .85rem; }
+.h-text { min-width: 0; }
+.ex-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; margin: 10px 0 4px; }
+.ex-now { font-weight: 600; }
+.ex-before { color: var(--muted); }
+.ex-list { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 8px; }
+.ex-row { display: grid; grid-template-columns: minmax(0, 11em) 1fr auto; gap: 8px; align-items: center; font-size: .9rem; }
+.ex-edge { grid-template-columns: 1fr auto; font-weight: 700; border-top: 1px dashed var(--line); padding-top: 6px; }
+.ex-edge:first-child { border-top: 0; border-bottom: 1px dashed var(--line); padding: 0 0 6px; }
+.ex-val { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ex-row.up .ex-val { color: #a3470c; }
+.ex-row.down .ex-val { color: var(--brand); }
+@media (max-width: 480px) { .ex-row { grid-template-columns: 1fr auto; } .ex-row .wtrack { grid-column: 1 / -1; grid-row: 2; } }
+
+/* SYNTHETIC model check */
+.trust { margin-top: 16px; }
+.synth-tag { display: inline-block; background: #efe7ff; color: #3b1f7a; border: 2px dashed #7b5cc4; border-radius: 10px; padding: 4px 10px; font-weight: 700; font-size: .85rem; margin: 0 0 6px; }
+.trust-grid { display: grid; gap: 18px; }
+@media (min-width: 760px) { .trust-grid { grid-template-columns: 1fr 1fr; } }
+.tfig { margin: 0; min-width: 0; }
+.tfig figcaption { margin-bottom: 6px; }
+.tchart { max-width: 360px; }
+.tsvg { width: 100%; height: auto; display: block; }
+.tsvg .ax { stroke: #9fb3b8; stroke-width: 1; }
+.tsvg .axl { font-size: 11px; fill: var(--muted); }
+.tsvg .tick { font-size: 10px; fill: var(--muted); }
+.tsvg .diag { stroke: #7d8f95; stroke-dasharray: 4 4; stroke-width: 1.2; }
+.tsvg .ln { fill: none; stroke-width: 2.4; }
+.tsvg .ln.model { stroke: var(--accent); }
+.tsvg .ln.base { stroke: #7d8f95; stroke-dasharray: 2 3; }
+.tsvg .ln.best { stroke: var(--brand-2); stroke-dasharray: 6 4; }
+.tsvg .dot { fill: var(--accent); stroke: #fff; stroke-width: 1.5; }
+#rel-table th[scope="row"] { white-space: nowrap; }
