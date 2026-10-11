@@ -40,7 +40,7 @@ test('every English string has a Spanish translation with the same placeholders'
 });
 test('t() interpolates and falls back', () => {
   assert.equal(I.t('en', 'pct_best', { pct: 72 }), '72% of your personal best');
-  assert.equal(I.t('es', 'pct_best', { pct: 72 }), '72% de tu mejor marca');
+  assert.equal(I.t('es', 'pct_best', { pct: 72 }), '72% de tu mejor puntuación');
   assert.equal(I.t('es', 'nope'), 'nope');
 });
 test('.ics: valid all-day event, escaped, folded, CRLF', () => {
@@ -67,4 +67,15 @@ test('share note built from guidance invents no medication text', () => {
     const s = SH.note({ heading: 'x', items: g.items.map(i => I.t(l, i.key, i.params)), footer: [I.t(l, 'share_footer')] });
     assert.ok(!/albuterol|puff|inhal|dose|mg\b/i.test(s), s);
   });
+});
+test('Spanish uses the CDC / NHLBI / AirNow terms consistently', () => {
+  // CDC "Plan de acción para el control del asma" (2024): sibilancias, dificultad para respirar, signos de peligro, mejor puntuación.
+  // AirNow español: Insalubre para grupos sensibles / Insalubre / Muy insalubre.
+  assert.match(I.es.s_wheeze, /^Sibilancias/);
+  assert.equal(I.es.cat_usg, 'Insalubre para grupos sensibles');
+  assert.equal(I.es.cat_unhealthy, 'Insalubre');
+  assert.equal(I.es.cat_very, 'Muy insalubre');
+  const all = Object.values(I.es).join(' \n ');
+  assert.ok(!/da\u00f1ina|falta de aire|mejor marca|se\u00f1ales de peligro/i.test(all), 'retired term still present');
+  assert.ok((all.match(/alivio r\u00e1pido/g) || []).length >= 4);
 });
