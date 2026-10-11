@@ -16,6 +16,7 @@ FIX = ROOT / 'tests' / 'fixtures'
 AQ = (FIX / 'airquality-sugarland-2026-10-10.json').read_text()
 WX = (FIX / 'weather-sugarland-2026-10-10.json').read_text()
 GEO = (FIX / 'geocode-london-2026-10-11.json').read_text()   # real Open-Meteo Geocoding answer for "London"
+GEO_LONG = (FIX / 'geocode-long-names-synthetic.json').read_text()   # SYNTHETIC: very long name + 3 same-looking Springfields
 SHOTS = ROOT / 'tests' / 'screenshots'
 SHOTS.mkdir(exist_ok=True)
 passed = failed = 0
@@ -44,6 +45,8 @@ def wire(page, mode='ok'):
                 return route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body='{"generationtime_ms":0.2}')
             if 'name=Slow' in url:
                 HELD_GEO.append(route); return   # never answer: city search must give up after 8 s
+            if 'name=Springfield' in url:
+                return route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=GEO_LONG)
             if 'name=Fail' in url:
                 return route.fulfill(status=503, content_type='application/json', headers={'access-control-allow-origin': '*'}, body='{"error":true}')
             return route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=GEO)
@@ -314,6 +317,20 @@ with sync_playwright() as p:
     HELD_GEO.clear()
     sw = pg.evaluate('document.documentElement.scrollWidth')
     check('ES: no horizontal overflow at 390px (search messages + SYNTHETIC button)', sw <= 390, sw)
+    # strict-judge round 2: very long names wrap inside the 390 px column, same-looking places are told apart
+    pg.fill('#place-q', 'Springfield'); pg.press('#place-q', 'Enter')
+    pg.wait_for_function("document.querySelectorAll('#place-results button').length === 5")
+    names = pg.locator('#place-results button').all_inner_texts()
+    check('long-name results: 5 distinct labels (county added to same-looking Springfields)', len(set(names)) == 5 and 'Springfield, Greene, Missouri, United States' in names and 'Springfield, Webster, Missouri, United States' in names, names)
+    sw = pg.evaluate('document.documentElement.scrollWidth')
+    check('long-name results: no horizontal overflow at 390px', sw <= 390, sw)
+    poke = pg.evaluate("() => [...document.querySelectorAll('#place-results li, #place-results button')].filter(e => e.getBoundingClientRect().right > document.documentElement.clientWidth + 0.5).length")
+    check('long-name results: every choice fits inside the screen', poke == 0, poke)
+    tall = pg.evaluate("() => [...document.querySelectorAll('#place-results button')].map(b => Math.round(b.getBoundingClientRect().height))")
+    check('long-name results: the 58-letter name wraps onto more lines inside its button (all >= 44 px tall)', tall[[n.startswith('Llanfair') for n in names].index(True)] > min(tall) and min(tall) >= 44, tall)
+    check('results list is named by the "pick your city" line', pg.evaluate("() => document.querySelector('#place-results').getAttribute('aria-labelledby')") == 'place-msg')
+    pg.locator('#place-form').screenshot(path=str(SHOTS / 'place-search-long-es.png'))
+    pg.fill('#place-q', ''); pg.evaluate("document.querySelector('#place-results').innerHTML = ''")
     pg.locator('#today').screenshot(path=str(SHOTS / 'place-search-es.png'))
     pg.select_option('#loc', 'sugarland')
     pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")

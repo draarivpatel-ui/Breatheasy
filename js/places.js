@@ -28,7 +28,23 @@
       .filter(function (x) { return x.r && x.r.name && isNum(x.r.latitude) && isNum(x.r.longitude); })
       .sort(function (a, b) { return ((b.r.population || 0) - (a.r.population || 0)) || (a.i - b.i); })
       .slice(0, 5)
-      .map(function (x) { return { name: label(x.r), lat: x.r.latitude, lon: x.r.longitude }; });
+      .map(function (x) { return { r: x.r, name: label(x.r), lat: x.r.latitude, lon: x.r.longitude }; })
+      .map(function (p, i, all) { return { name: distinct(p, all), lat: p.lat, lon: p.lon }; });
+  }
+
+  /** Two choices must never read the same (e.g. two "Springfield, Missouri, United States"):
+   *  add the county/district (admin2) when it tells them apart, else the coordinates. */
+  function distinct(p, all) {
+    var same = all.filter(function (o) { return o.name === p.name; });
+    if (same.length < 2) return p.name;
+    var a2 = p.r.admin2 && p.r.admin2 !== p.r.name ? p.r.admin2 : '';
+    var a2Unique = a2 && same.filter(function (o) { return (o.r.admin2 || '') === a2; }).length === 1;
+    if (a2Unique) {
+      var parts = p.name.split(', ');
+      parts.splice(1, 0, a2);
+      return parts.join(', ');
+    }
+    return p.name + ' (' + p.lat.toFixed(2) + '\u00b0, ' + p.lon.toFixed(2) + '\u00b0)';
   }
 
   function search(name, lang, timeoutMs) {

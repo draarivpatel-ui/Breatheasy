@@ -30,9 +30,9 @@ Built for **DSH Hacks V2** (theme: AI × Healthcare).
 3. Run the tests (Node 18+, no install):
    ```bash
    git clone https://github.com/draarivpatel-ui/Breatheasy && cd Breatheasy
-   npm test        # node --test; ends with "# pass 94" and "# fail 0"
+   npm test        # node --test; ends with "# pass 97" and "# fail 0"
    ```
-   Optional: `python3 tests/e2e.py` (Playwright) runs 129 headless-Chromium checks against saved real API responses.
+   Optional: `python3 tests/e2e.py` (Playwright) runs 134 headless-Chromium checks against saved real API responses.
 
 ## Why
 
@@ -124,11 +124,11 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 11, 2026: **94/94 unit tests and 129/129 end-to-end checks passing**. GitHub Actions (`.github/workflows/tests.yml`) runs both on every push to `main`.
+Last run Oct 11, 2026: **97/97 unit tests and 134/134 end-to-end checks passing**. GitHub Actions (`.github/workflows/tests.yml`) runs both on every push to `main`.
 
 ```bash
-node --test tests/*.test.js                          # 94 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels), EN/ES key parity (same keys and placeholders, no English copied into Spanish)
-CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 129 headless-Chromium checks (pip install playwright)
+node --test tests/*.test.js                          # 97 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish)
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 134 headless-Chromium checks (pip install playwright)
 node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```

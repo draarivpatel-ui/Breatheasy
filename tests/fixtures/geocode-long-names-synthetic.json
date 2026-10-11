@@ -1,0 +1,50 @@
+{
+ "_note": "SYNTHETIC test answer in Open-Meteo Geocoding shape: one very long real place name + three same-looking Springfields (coordinates rounded). Used only by tests/e2e.py.",
+ "results": [
+  {
+   "name": "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch",
+   "latitude": 53.22,
+   "longitude": -4.2,
+   "country": "United Kingdom",
+   "admin1": "Wales",
+   "admin2": "Isle of Anglesey",
+   "population": 3000
+  },
+  {
+   "name": "Springfield",
+   "latitude": 39.8,
+   "longitude": -89.64,
+   "country": "United States",
+   "admin1": "Illinois",
+   "admin2": "Sangamon",
+   "population": 116000
+  },
+  {
+   "name": "Springfield",
+   "latitude": 37.2,
+   "longitude": -93.29,
+   "country": "United States",
+   "admin1": "Missouri",
+   "admin2": "Greene",
+   "population": 169000
+  },
+  {
+   "name": "Springfield",
+   "latitude": 37.35,
+   "longitude": -92.9,
+   "country": "United States",
+   "admin1": "Missouri",
+   "admin2": "Webster",
+   "population": 900
+  },
+  {
+   "name": "San Cristóbal de las Casas",
+   "latitude": 16.73,
+   "longitude": -92.64,
+   "country": "México",
+   "admin1": "Chiapas",
+   "admin2": "San Cristóbal de las Casas",
+   "population": 158000
+  }
+ ]
+}
