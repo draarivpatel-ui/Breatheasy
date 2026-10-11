@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var AQI = window.BE_AQI, Z = window.BE_Zones, F = window.BE_Forecast, M = window.BE_Model,
-    G = window.BE_Guidance, DEMO = window.BE_Demo, ICS = window.BE_ICS, I = window.BE_I18N;
+    G = window.BE_Guidance, DEMO = window.BE_Demo, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share;
 
   var KEY = 'breatheeasy.v1', DEMO_KEY = 'breatheeasy.demo.v1', FC_KEY = 'breatheeasy.forecast.v1';
   var PLACES = {
@@ -140,7 +140,9 @@
       fact(t('dominant'), d.dominant ? t(d.dominant) : null);
       fact(t('ozone'), d.aqiO3 != null ? t('aqi') + ' ' + d.aqiO3 + (d.o3ppm != null ? ' (' + Math.round(d.o3ppm * 1000) + ' ppb, 8 h)' : '') : null);
       fact(t('pm25'), d.aqiPM25 != null ? t('aqi') + ' ' + d.aqiPM25 + (d.pm25 != null ? ' (' + d.pm25 + ' µg/m³, 24 h)' : '') : null);
-      fact(t('pollen'), d.pollenLevel != null ? t('pollen_' + d.pollenLevel) : t('pollen_na'));
+      var loggedPollen = null;
+      if (d.pollenLevel == null) { var te = state.entries.filter(function (e) { return e.date === TODAY; })[0]; if (te && te.pollenLevel != null) loggedPollen = te.pollenLevel; }
+      fact(t('pollen'), d.pollenLevel != null ? t('pollen_' + d.pollenLevel) : loggedPollen != null ? t('pollen_logged', { level: t('pollen_' + loggedPollen) }) : t('pollen_na'));
       fact(t('high_temp'), d.tempMaxF != null ? Math.round(d.tempMaxF) + ' °F' : null);
     }
     var ul = $('#pc-items'); ul.innerHTML = '';
@@ -278,7 +280,8 @@
         $('#why-h').textContent = t('why_h', { band: t('risk_' + M.band(pred.p)).toLowerCase() });
         var ul = $('#why-list'); ul.innerHTML = '';
         pred.contributions.slice(0, 4).forEach(function (c) {
-          var v = c.value == null ? '—' : c.key === 'pollenLevel' ? t('pollen_' + c.value) : c.key === 'prevBad' ? (c.value ? '✓' : '✗') : c.key === 'tempMaxF' ? Math.round(c.value) + ' °F' : c.key === 'humidity' ? Math.round(c.value) + '%' : String(c.value);
+          var dayP = d.pollenLevel;
+          var v = c.value == null ? '—' : c.key === 'pollenLevel' ? (dayP == null ? t('pollen_logged', { level: t('pollen_' + c.value) }) : t('pollen_' + c.value)) : c.key === 'prevBad' ? (c.value ? '✓' : '✗') : c.key === 'tempMaxF' ? Math.round(c.value) + ' °F' : c.key === 'humidity' ? Math.round(c.value) + '%' : String(c.value);
           ul.appendChild(el('li', { class: c.contribution >= 0 ? 'up' : 'down' }, t('f_' + c.feature) + ': ' + v + ' → ' + (c.contribution >= 0 ? '▲ ' + t('dir_up') : '▼ ' + t('dir_down'))));
         });
       } else $('#why').hidden = true;
@@ -307,6 +310,26 @@
     var summary = 'BreatheEasy: ' + (r.day && r.guidance.category ? t('aqi') + ' ' + r.day.aqi + ' ' + catLabel(r.guidance.category) : t('tomorrow'));
     var desc = r.guidance.items.map(function (it) { return '• ' + t(it.key, it.params); }).join('\n') + '\n\n' + t('safety') + ' ' + t('safety_911');
     download('breatheeasy-' + TOMORROW + '.ics', 'text/calendar', ICS.allDayEvent(TOMORROW, summary, desc));
+  }
+
+  function shareText() {
+    var r = renderPlanCard();
+    var head = t('share_head', { date: fmtDate(TOMORROW), place: placeName() });
+    var air = r.day && r.guidance.category ? t('share_air', { aqiLabel: t('aqi'), aqi: r.day.aqi, cat: catLabel(r.guidance.category), pol: r.day.dominant ? t(r.day.dominant) : '\u2014' }) : '';
+    return SH.note({ heading: head, air: air, items: r.guidance.items.map(function (it) { return t(it.key, it.params); }), footer: [t('share_footer'), t('safety_911')] });
+  }
+  function copyShare() {
+    var ta = $('#share-text'), msg = $('#share-msg');
+    function manual() { ta.focus(); ta.select(); msg.textContent = t('share_manual'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = t('share_copied'); }, manual);
+    else manual();
+  }
+  function onShare() {
+    var text = shareText();
+    $('#share-box').hidden = false; $('#share-text').value = text; $('#share-msg').textContent = '';
+    if (navigator.share) {
+      navigator.share({ title: 'BreatheEasy', text: text }).then(function () { $('#share-msg').textContent = t('share_done'); }, function () { /* cancelled: text stays on screen */ });
+    } else copyShare();
   }
 
   /* ---------- wire up ---------- */
@@ -345,6 +368,8 @@
       renderInsights(); renderPlanCard();
     });
     $('#ics').addEventListener('click', onIcs);
+    $('#share').addEventListener('click', onShare);
+    $('#share-copy').addEventListener('click', copyShare);
     $('#print').addEventListener('click', function () { window.print(); });
     $('#export').addEventListener('click', function () {
       download('breatheeasy-data.json', 'application/json', JSON.stringify({ exportedAt: new Date().toISOString(), plan: state.plan, entries: state.entries }, null, 2));
