@@ -7,7 +7,7 @@ Run:   pip install playwright
 By default Open-Meteo calls are answered from tests/fixtures (a real response saved on 2026-10-10)
 and the app's clock is pinned with ?today=, so results are deterministic.
 """
-import json, os, pathlib, sys
+import json, os, pathlib, sys, threading, functools, http.server, socketserver
 from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -125,6 +125,37 @@ with sync_playwright() as p:
     check('held-out accuracy vs baseline reported', 'always guessing' in pg.inner_text('#eval'), pg.inner_text('#eval'))
     check('"why" explanation for tomorrow', pg.locator('#why-list li').count() >= 3)
     check('personal outlook now shows a band', pg.locator('#pc-risk .risk').count() == 1)
+    check('held-out line now reports a Brier score', 'Brier score' in pg.inner_text('#eval'), pg.inner_text('#eval'))
+
+    # explain a past day
+    check('explain card shown once the model is ready', pg.is_visible('#explain'))
+    check('explain picker lists all 75 logged days', pg.locator('#explain-date option').count() == 75, pg.locator('#explain-date option').count())
+    check('explain view: start + 6 feature rows + result', pg.locator('#explain-out .ex-row').count() == 8, pg.locator('#explain-out .ex-row').count())
+    check('explain view labels the synthetic day', 'SYNTHETIC' in pg.inner_text('#explain-out .ex-head'))
+    pg.select_option('#explain-date', '2026-10-01')
+    ex = pg.inner_text('#explain-out')
+    check('explain Oct 1: odds multipliers + honest "before" prediction', '×' in ex and 'odds' in ex and 'Trained only on the' in ex, ex[:400])
+    check('explain note says weighed, not caused', 'not what caused the day' in ex)
+    first_btn = pg.locator('#history .btn-mini').first
+    want = first_btn.get_attribute('data-date')
+    check('each history row has an Explain button with a full label', pg.locator('#history .btn-mini').count() == 14 and 'Explain' in (first_btn.get_attribute('aria-label') or ''))
+    first_btn.click()
+    check('Explain button switches the picker to that day', pg.input_value('#explain-date') == want, (pg.input_value('#explain-date'), want))
+    pg.select_option('#explain-date', pg.locator('#explain-date option').last.get_attribute('value'))
+    check('earliest day: says there was no earlier model', 'not enough earlier days' in pg.inner_text('#explain-out'))
+    pg.locator('#explain').screenshot(path=str(SHOTS / 'explain-day.png'))
+
+    # SYNTHETIC calibration + sensitivity check
+    pg.wait_for_function("document.querySelectorAll('#sens-table tbody tr').length > 0")
+    check('trust card tagged SYNTHETIC', 'SYNTHETIC' in pg.inner_text('#trust .synth-tag'))
+    check('reliability plot: diagonal + dots + 5-bin table', pg.locator('#rel-chart svg .diag').count() == 1 and pg.locator('#rel-chart svg circle').count() >= 3 and pg.locator('#rel-table tbody tr').count() == 5)
+    check('sensitivity: 6 sizes (14..90 days) with lines for model/baseline/best', pg.locator('#sens-table tbody tr').count() == 6 and pg.locator('#sens-chart svg polyline').count() == 3)
+    sens_first = pg.inner_text('#sens-table tbody tr:first-child th')
+    check('sensitivity starts at 14 logged days', sens_first.startswith('14'), sens_first)
+    tb = pg.inner_text('#trust-brier')
+    check('Brier vs base-rate vs best possible + calibration error stated', 'Brier' in tb and 'best possible' in tb and 'Calibration error' in tb, tb)
+    check('trust card states real-world limits', 'Real people are messier' in pg.inner_text('#trust'))
+    pg.locator('#trust').screenshot(path=str(SHOTS / 'trust-check.png'))
     pg.screenshot(path=str(SHOTS / 'desktop-insights.png'), full_page=False)
     pg.locator('#insights').screenshot(path=str(SHOTS / 'insights-section.png'))
 
@@ -147,6 +178,7 @@ with sync_playwright() as p:
     pg.select_option('#lang', 'es')
     check('html lang=es', pg.get_attribute('html', 'lang') == 'es')
     check('Spanish category', pg.inner_text('#pc-cat') == 'Dañina para grupos sensibles', pg.inner_text('#pc-cat'))
+    check('Spanish model check + explain view', pg.inner_text('#trust h3') == '¿Cuánto puedes confiar en él?' and 'SINTÉTICA' in pg.inner_text('#trust .synth-tag') and 'Explicar' in pg.inner_text('#explain h3'))
     check('Spanish about block visible, English hidden', pg.is_visible('[data-only="es"]') and not pg.is_visible('[data-only="en"]'))
     pg.screenshot(path=str(SHOTS / 'desktop-es.png'), full_page=False)
     pg.select_option('#lang', 'en')
@@ -200,6 +232,47 @@ with sync_playwright() as p:
     pg.locator('#insights').screenshot(path=str(SHOTS / 'mobile-insights.png'))
     check('no JS errors on mobile', not m_err, m_err)
     ctx.close()
+
+    # ---------- installable + offline (served over http so the service worker can run) ----------
+    print('PWA: install + offline')
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a): pass
+    handler = functools.partial(Quiet, directory=str(ROOT))
+    httpd = socketserver.TCPServer(('127.0.0.1', 0), handler)
+    port = httpd.server_address[1]
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    base = f'http://127.0.0.1:{port}/'
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844})
+    net = {'offline': False}
+    def ctx_route(route):
+        if net['offline']:
+            return route.abort('internetdisconnected')
+        body = AQ if 'air-quality-api' in route.request.url else WX
+        route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=body)
+    ctx.route('**/*open-meteo.com/**', ctx_route)
+    pg = ctx.new_page(); p_err = []
+    pg.on('pageerror', lambda e: p_err.append(str(e)))
+    pg.goto(base + '?today=2026-10-10')
+    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
+    man = pg.evaluate("fetch(document.querySelector('link[rel=manifest]').href).then(r => r.json())")
+    check('manifest served and parsed', man.get('display') == 'standalone' and len(man.get('icons', [])) >= 3, man)
+    pg.wait_for_function("navigator.serviceWorker && navigator.serviceWorker.ready.then(() => true)", timeout=15000)
+    pg.reload(); pg.wait_for_function("!!navigator.serviceWorker.controller", timeout=15000)
+    check('service worker controls the page', pg.evaluate('!!navigator.serviceWorker.controller'))
+    caches = pg.evaluate('caches.keys()')
+    ver = pg.evaluate("document.querySelector('link[rel=stylesheet]').href.split('?v=')[1]")
+    check('one cache, named with the current content hash', caches == ['breatheeasy-' + ver], (caches, ver))
+    cached = pg.evaluate("caches.open(" + json.dumps('breatheeasy-' + ver) + ").then(c => c.keys()).then(k => k.map(r => r.url))")
+    check('app shell precached with ?v= URLs; no forecast API cached', any('js/app.js?v=' + ver in u for u in cached) and not any('open-meteo' in u for u in cached), len(cached))
+    ctx.set_offline(True); net['offline'] = True
+    pg.reload()
+    pg.wait_for_function("document.querySelector('#fc-status').textContent.length > 0", timeout=15000)
+    check('offline reload: app still loads from the cache', 'BreatheEasy' in pg.title() and pg.inner_text('#pc-aqi .aqi-num') == '64', pg.inner_text('#pc-aqi .aqi-num'))
+    check('offline note names the saved forecast', 'offline' in pg.inner_text('#fc-status').lower(), pg.inner_text('#fc-status'))
+    pg.screenshot(path=str(SHOTS / 'offline-mobile.png'), full_page=False)
+    ctx.set_offline(False)
+    check('no JS errors in the PWA flow', not p_err, p_err)
+    ctx.close(); httpd.shutdown()
 
     # ---------- API failure ----------
     print('API failure')
