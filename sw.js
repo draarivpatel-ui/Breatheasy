@@ -8,7 +8,7 @@
  *  - Other origins (the Open-Meteo forecast APIs): never cached here. js/fccache.js keeps the last good
  *    forecast per place in localStorage (30 min fresh, 3 h fallback) and labels its age honestly.
  */
-var VERSION = 'be-d67456655c';
+var VERSION = 'be-a2e70a8cac';
 var CACHE = 'breatheeasy-' + VERSION;
 var ASSETS = [
   'styles.css', 'js/aqi.js', 'js/zones.js', 'js/forecast.js', 'js/fccache.js', 'js/model.js', 'js/guidance.js', 'js/demo.js',
