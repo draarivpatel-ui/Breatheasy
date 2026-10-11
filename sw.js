@@ -8,11 +8,11 @@
  *  - Other origins (the Open-Meteo forecast APIs): never cached here. The app keeps the last
  *    forecast in localStorage on this device and says so when it is offline.
  */
-var VERSION = 'be-bbc02b14fb';
+var VERSION = 'be-102b11e056';
 var CACHE = 'breatheeasy-' + VERSION;
 var ASSETS = [
   'styles.css', 'js/aqi.js', 'js/zones.js', 'js/forecast.js', 'js/model.js', 'js/guidance.js', 'js/demo.js',
-  'js/validate.js', 'js/ics.js', 'js/share.js', 'js/i18n.js', 'js/app.js'
+  'js/validate.js', 'js/ics.js', 'js/share.js', 'js/places.js', 'js/i18n.js', 'js/app.js'
 ];
 var SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
   'icons/maskable-512.png', 'icons/apple-touch-icon.png'].concat(ASSETS.map(function (a) { return a + '?v=' + VERSION; }));
