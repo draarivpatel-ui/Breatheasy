@@ -36,7 +36,7 @@
     var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var timer = ctl ? setTimeout(function () { ctl.abort(); }, timeoutMs || 8000) : null;
     return fetch(searchUrl(name, lang), ctl ? { signal: ctl.signal } : undefined)
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (r) { if (!r.ok) { var e = new Error('HTTP ' + r.status); e.status = r.status; throw e; } return r.json(); })
       .then(rank)
       .finally(function () { if (timer) clearTimeout(timer); });
   }
