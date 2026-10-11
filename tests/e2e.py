@@ -381,6 +381,61 @@ with sync_playwright() as p:
     check('no JS errors in the 429 flow', not r_err, r_err)
     ctx.close()
 
+    # ---------- slow / offline network: 8 s timeout, last result kept, EN/ES message ----------
+    print('Slow / offline network')
+    import time
+    ctx = browser.new_context(locale='en-US'); pg = ctx.new_page(); n_err = []
+    pg.on('pageerror', lambda e: n_err.append(str(e)))
+    nmode = {'v': 'ok'}; held = []
+    def n_handle(route):
+        if nmode['v'] == 'hang':
+            held.append(route); return   # never answer: the app must give up on its own
+        if nmode['v'] == 'down':
+            return route.abort('internetdisconnected')
+        body = AQ if 'air-quality-api' in route.request.url else WX
+        route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=body)
+    pg.route('**/*open-meteo.com/**', n_handle)
+    pg.goto(APP + '?today=2026-10-10')
+    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
+    pg.evaluate(age, 40); nmode['v'] = 'hang'
+    t0 = time.time(); pg.reload()
+    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('8 seconds')", timeout=20000)
+    took = time.time() - t0; st = pg.inner_text('#fc-status')
+    check('hung Open-Meteo: app gives up after ~8 s (not sooner, not never)', 7.0 <= took <= 15.0, round(took, 1))
+    check('hung Open-Meteo requests were really made (and held)', any('air-quality-api' in r.request.url for r in held), len(held))
+    check('timeout: last result stays on screen (AQI 64)', pg.inner_text('#pc-aqi .aqi-num') == '64', pg.inner_text('#pc-aqi .aqi-num'))
+    check('timeout message is clear and honest about age (EN)', 'didn\u2019t answer within 8 seconds' in st and 'as of 40 min ago' in st and 'Refresh' in st, st)
+    check('timeout message styled as a warning', 'status-warn' in (pg.get_attribute('#fc-status', 'class') or ''))
+    pg.select_option('#lang', 'es'); st = pg.inner_text('#fc-status')
+    check('timeout message in Spanish', 'no respondi\u00f3 en 8 segundos' in st and 'de hace 40 min' in st, st)
+    pg.locator('#today').screenshot(path=str(SHOTS / 'timeout-fallback-es.png'))
+    pg.select_option('#lang', 'en')
+    pg.evaluate("localStorage.removeItem('breatheeasy.fccache.v1')")
+    pg.reload()
+    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('No air-quality data')", timeout=20000)
+    st = pg.inner_text('#fc-status')
+    check('timeout with nothing saved: no AQI, no-data message names the timeout', pg.inner_text('#pc-aqi .aqi-num') == '—' and '8 seconds' in st, st)
+    for r in held:
+        try: r.abort()
+        except Exception: pass
+    held.clear()
+    nmode['v'] = 'ok'; pg.click('#refresh')
+    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
+    check('back online: Refresh brings the forecast back', pg.inner_text('#pc-aqi .aqi-num') == '64')
+    pg.evaluate(age, 40)
+    ctx.set_offline(True); nmode['v'] = 'down'
+    t0 = time.time(); pg.click('#refresh')
+    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('offline')", timeout=10000)
+    took = time.time() - t0; st = pg.inner_text('#fc-status')
+    check('offline Refresh: answers at once (no 8 s wait)', took < 4, round(took, 1))
+    check('offline: last result kept (AQI 64) with an offline note and its age', pg.inner_text('#pc-aqi .aqi-num') == '64' and 'You\u2019re offline' in st and 'as of 40 min ago' in st, st)
+    pg.select_option('#lang', 'es'); st = pg.inner_text('#fc-status')
+    check('offline note in Spanish', 'sin conexi\u00f3n' in st and 'de hace 40 min' in st, st)
+    pg.select_option('#lang', 'en')
+    ctx.set_offline(False)
+    check('no JS errors in the slow/offline flow', not n_err, n_err)
+    ctx.close()
+
     # ---------- optional live API ----------
     if os.environ.get('LIVE') == '1':
         print('Live Open-Meteo')
