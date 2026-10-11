@@ -130,31 +130,60 @@
     });
   }
 
-  /** GET JSON. A failed call throws an Error with .status (HTTP code, 0 for network) and .rateLimited (429).
+  /** How long we wait for Open-Meteo before giving up (then js/fccache.js serves the last good answer). */
+  var TIMEOUT_MS = 8000;
+
+  function isOffline() {
+    return typeof navigator !== 'undefined' && navigator && navigator.onLine === false;
+  }
+
+  /** GET JSON. A failed call throws an Error with .status (HTTP code, 0 for network), .rateLimited (429),
+   *  .timedOut (no full answer within timeoutMs; the request is aborted) and .offline (browser says offline).
    *  Open-Meteo puts its reason in the body ({"error":true,"reason":"..."}); a non-JSON body is tolerated. */
-  function fetchJson(url, fetchImpl) {
-    return (fetchImpl || fetch)(url).then(function (r) {
+  function fetchJson(url, fetchImpl, timeoutMs) {
+    var ms = typeof timeoutMs === 'number' && timeoutMs > 0 ? timeoutMs : TIMEOUT_MS;
+    var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = null, timedOut = false;
+    function fail(msg, extra) {
+      var err = new Error(msg); err.status = 0; err.rateLimited = false; err.timedOut = false; err.offline = isOffline();
+      Object.keys(extra || {}).forEach(function (k) { err[k] = extra[k]; });
+      return err;
+    }
+    // The timer both aborts the request and rejects, so a fetch that ignores the signal cannot hang the app.
+    var timeout = new Promise(function (_, reject) {
+      timer = setTimeout(function () {
+        timedOut = true;
+        if (ctl) { try { ctl.abort(); } catch (e) { /* ignore */ } }
+        reject(fail('timeout after ' + Math.round(ms / 1000) + ' s', { timedOut: true, name: 'TimeoutError' }));
+      }, ms);
+    });
+    var req = Promise.resolve().then(function () {
+      return (fetchImpl || fetch)(url, ctl ? { signal: ctl.signal } : undefined);
+    }).then(function (r) {
       var body = typeof r.text === 'function'
         ? r.text().then(function (txt) { try { return JSON.parse(txt); } catch (e) { return null; } })
         : r.json().catch(function () { return null; });
       return body.then(function (j) {
         if (!r.ok || !j || j.error) {
           var err = new Error((j && j.reason) || ('HTTP ' + r.status));
-          err.status = r.status || 0; err.rateLimited = r.status === 429;
+          err.status = r.status || 0; err.rateLimited = r.status === 429; err.timedOut = false; err.offline = false;
+          err.httpError = true;
           throw err;
         }
         return j;
       });
-    }, function (e) {
-      var err = new Error((e && e.message) || 'network error'); err.status = 0; err.rateLimited = false;
-      throw err;
+    }).catch(function (e) {
+      if (e && e.httpError) throw e;
+      if (timedOut || (e && e.name === 'AbortError')) throw fail('timeout after ' + Math.round(ms / 1000) + ' s', { timedOut: true, name: 'TimeoutError' });
+      throw fail((e && e.message) || 'network error');
     });
+    return Promise.race([req, timeout]).then(function (j) { clearTimeout(timer); return j; }, function (e) { clearTimeout(timer); throw e; });
   }
 
   /** Fetch both APIs and return merged days. Weather failure is tolerated (features become null). */
-  function load(lat, lon, fetchImpl) {
-    var aq = fetchJson(aqUrl(lat, lon), fetchImpl);
-    var wx = fetchJson(wxUrl(lat, lon), fetchImpl).catch(function () { return null; });
+  function load(lat, lon, fetchImpl, timeoutMs) {
+    var aq = fetchJson(aqUrl(lat, lon), fetchImpl, timeoutMs);
+    var wx = fetchJson(wxUrl(lat, lon), fetchImpl, timeoutMs).catch(function () { return null; });
     return Promise.all([aq, wx]).then(function (res) {
       return { days: mergeDays(dailyAirQuality(res[0].hourly), res[1] && res[1].daily), timezone: res[0].timezone, fetchedAt: new Date().toISOString() };
     });
@@ -162,7 +191,8 @@
 
   var api = {
     aqUrl: aqUrl, wxUrl: wxUrl, maxOzone8h: maxOzone8h, dailyAirQuality: dailyAirQuality,
-    pollenLevel: pollenLevel, mergeDays: mergeDays, fetchJson: fetchJson, load: load, POLLEN_VARS: POLLEN_VARS
+    pollenLevel: pollenLevel, mergeDays: mergeDays, fetchJson: fetchJson, load: load, POLLEN_VARS: POLLEN_VARS,
+    TIMEOUT_MS: TIMEOUT_MS
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BE_Forecast = api;
