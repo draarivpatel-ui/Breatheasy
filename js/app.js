@@ -567,7 +567,12 @@
       ece: (rel.ece * 100).toFixed(1), mp: Math.round(rel.meanP * 100), ob: Math.round(rel.observed * 100) });
   }
 
-  function renderAll() { applyI18n(); renderThresholds(); renderPlanCard(); renderStrip(); renderInsights(); renderTrust(); }
+  /** Tabs row: mark it when more tabs sit off the right edge (CSS fades that edge). */
+  function tabCue() {
+    var r = $('.tabs-row'); if (!r) return;
+    r.classList.toggle('more', r.scrollLeft + r.clientWidth < r.scrollWidth - 2);
+  }
+  function renderAll() { applyI18n(); tabCue(); renderThresholds(); renderPlanCard(); renderStrip(); renderInsights(); renderTrust(); }
 
   /* ---------- export / print ---------- */
   function download(name, mime, text) {
@@ -612,6 +617,7 @@
   /* ---------- wire up ---------- */
   function init() {
     buildChecks(); applyI18n(); renderPlanForm();
+    $('.tabs-row').addEventListener('scroll', tabCue, { passive: true }); window.addEventListener('resize', tabCue); tabCue();
     $('#loc').value = state.place;
     $('#ci-date').value = TODAY; $('#ci-date').max = TODAY;
     $('#lang').addEventListener('change', function () { state.lang = this.value; persist(); renderFcStatus(); renderAll(); refreshShareText(); });

@@ -9,7 +9,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 64px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
-body { margin: 0; font: 16px/1.55 var(--font); color: var(--ink); background: var(--bg); -webkit-text-size-adjust: 100%; }
+body { overflow-wrap: break-word; /* long unbroken place names wrap instead of widening the page */  margin: 0; font: 16px/1.55 var(--font); color: var(--ink); background: var(--bg); -webkit-text-size-adjust: 100%; }
 .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
 a { color: var(--brand-2); }
 a:hover { color: var(--brand); }
@@ -41,6 +41,8 @@ a:hover { color: var(--brand); }
 .tabs-row { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
 .tabs a { flex: none; padding: 12px 9px; font-size: .95rem; min-height: 44px; color: var(--muted); text-decoration: none; font-weight: 600; border-bottom: 3px solid transparent; }
 .tabs a:hover, .tabs a:focus-visible { color: var(--brand); border-bottom-color: var(--brand-2); }
+/* more tabs to the right (Spanish labels at phone width): fade the edge so the cut-off tab reads as 'scroll for more' */
+.tabs-row.more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
 
 main { padding-top: 8px; padding-bottom: 48px; outline: none; }
 section { padding-top: 24px; }
@@ -54,7 +56,7 @@ h4 { font-size: 1rem; margin: 16px 0 6px; }
 .sub { margin-top: 22px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin: 12px 0; }
 .section-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px; }
-.loc { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.loc { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
 .loc label { font-weight: 600; font-size: .92rem; }
 
 /* buttons + inputs */
@@ -70,7 +72,7 @@ h4 { font-size: 1rem; margin: 16px 0 6px; }
 select, input[type=number], input[type=text], input[type=search], input[type=tel], input[type=date], textarea {
   font: inherit; color: var(--ink); background: #fff; border: 1.5px solid #9fb3b8; border-radius: 10px; padding: 10px 12px; min-height: 44px; width: 100%;
 }
-.loc select { width: auto; }
+.loc select { width: auto; max-width: 100%; min-width: 0; text-overflow: ellipsis; } /* a long searched city name must not widen the page */
 textarea { resize: vertical; }
 .form .field { margin-bottom: 14px; }
 .field label { display: block; font-weight: 600; margin-bottom: 4px; }
@@ -107,6 +109,8 @@ legend { font-weight: 700; padding: 0 6px; display: flex; align-items: center; g
 .aqi-label { font-size: .78rem; font-weight: 700; letter-spacing: .06em; }
 .pc-cat { font-weight: 700; font-size: 1.1rem; margin: 8px 0 4px; }
 .facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0; font-size: .95rem; }
+/* phones: cap the label column so long values (the Spanish pollen note) get the width, not the label */
+@media (max-width: 480px) { .facts { grid-template-columns: minmax(0, 38%) minmax(0, 1fr); } }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; font-weight: 600; }
 .guidance { margin: 0; padding-left: 1.2em; }
