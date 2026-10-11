@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var AQI = window.BE_AQI, Z = window.BE_Zones, F = window.BE_Forecast, M = window.BE_Model,
-    G = window.BE_Guidance, P = window.BE_Places, DEMO = window.BE_Demo, V = window.BE_Validate, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share;
+    G = window.BE_Guidance, P = window.BE_Places, FC = window.BE_FcCache, DEMO = window.BE_Demo, V = window.BE_Validate, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share;
 
   var KEY = 'breatheeasy.v1', DEMO_KEY = 'breatheeasy.demo.v1', FC_KEY = 'breatheeasy.forecast.v1';
   var PLACES = {
@@ -28,8 +28,13 @@
   var state = load(KEY, null) || { lang: (navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en', place: 'sugarland', custom: null, plan: { triggers: [] }, entries: [] };
   state.entries = state.entries || []; state.plan = state.plan || { triggers: [] };
   var demo = load(DEMO_KEY, null); // array of synthetic entries or null
-  var forecast = load(FC_KEY, null); // {days, fetchedAt, place}
+  // Forecast for the current place, from Open-Meteo or the per-place cache (js/fccache.js).
+  // The old single-slot cache (FC_KEY) could show another city's forecast, so it is dropped.
+  try { localStorage.removeItem(FC_KEY); } catch (e) { /* ignore */ }
+  var forecast = null; // {days, fetchedAt, timezone}
+  var fcMeta = null;   // {source: 'network'|'cache'|'fallback', savedAt, error?}
   var fcError = null;
+  var fcSeq = 0;       // ignore answers for a place the user has already left
   var explainDate = null; // day picked in "Explain a past day"
   var trustResult = null; // SYNTHETIC model check, computed once (it never uses the user's data)
 
@@ -119,21 +124,40 @@
     });
   }
 
-  function fetchForecast() {
-    var c = coords();
-    $('#fc-status').textContent = t('loading');
-    fcError = null;
-    return F.load(c.lat, c.lon).then(function (res) {
-      forecast = { days: res.days, fetchedAt: res.fetchedAt, place: state.place };
-      save(FC_KEY, forecast);
-      $('#fc-status').textContent = '';
-    }).catch(function (err) {
-      fcError = (err && err.message) || 'network error';
-      var offline = typeof navigator.onLine === 'boolean' && !navigator.onLine;
-      $('#fc-status').textContent = offline && forecast && forecast.fetchedAt
-        ? t('offline_note', { time: new Date(forecast.fetchedAt).toLocaleString(state.lang === 'es' ? 'es-US' : 'en-US', { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' }) })
-        : t('forecast_error', { reason: fcError });
-    }).then(renderAll);
+  function asOf(savedAt) {
+    var a = FC.ageParts(Date.now() - savedAt);
+    return t(a.key, { n: a.n, h: a.h, m: a.m });
+  }
+  function reasonText(err) {
+    if (!err) return '';
+    if (err.rateLimited) return t('reason_429', { reason: err.message });
+    if (typeof navigator.onLine === 'boolean' && !navigator.onLine) return t('reason_offline');
+    return err.message || 'network error';
+  }
+  /** The honest status line for whatever forecast is on screen (re-run every minute so "N min ago" stays true). */
+  function renderFcStatus() {
+    var s = $('#fc-status');
+    if (fcError) { s.textContent = t('fc_nodata', { place: placeName(), reason: reasonText(fcError) }); s.className = 'status status-warn'; return; }
+    s.className = 'status';
+    if (!fcMeta || fcMeta.source === 'network') { s.textContent = ''; return; }
+    var offline = typeof navigator.onLine === 'boolean' && !navigator.onLine;
+    if (fcMeta.source === 'fallback') { s.textContent = t('fc_fallback', { reason: reasonText(fcMeta.error), asof: asOf(fcMeta.savedAt) }); s.className = 'status status-warn'; }
+    else s.textContent = t(offline ? 'fc_offline' : 'fc_cached', { asof: asOf(fcMeta.savedAt) });
+  }
+
+  function fetchForecast(force) {
+    var c = coords(), seq = ++fcSeq;
+    $('#fc-status').textContent = t('loading'); $('#fc-status').className = 'status';
+    return FC.getForecast({ lat: c.lat, lon: c.lon, storage: localStorage, now: Date.now(), load: F.load, force: force === true })
+      .then(function (r) {
+        if (seq !== fcSeq) return;
+        forecast = r.data; fcError = null;
+        fcMeta = { source: r.source, savedAt: r.savedAt, error: r.error || null }; // reason is worded at render time (EN/ES)
+      }, function (err) {
+        if (seq !== fcSeq) return;
+        forecast = null; fcMeta = null; fcError = err; // never show another place's or a too-old forecast
+      })
+      .then(function () { if (seq !== fcSeq) return; renderFcStatus(); renderAll(); });
   }
 
   function dayFor(iso) {
@@ -205,6 +229,7 @@
     }
     var src = $('#fc-source');
     src.textContent = forecast && forecast.fetchedAt ? t('source_line', { time: new Date(forecast.fetchedAt).toLocaleString(state.lang === 'es' ? 'es-US' : 'en-US', { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' }) }) : '';
+    if (forecast && fcMeta && fcMeta.source !== 'network') src.textContent += ' \u00b7 ' + asOf(fcMeta.savedAt);
     if (d && d.openMeteoMaxAqi != null) src.textContent += ' · ' + t('om_ref', { v: d.openMeteoMaxAqi });
     return { day: d, guidance: g, risk: risk, pred: pred };
   }
@@ -551,7 +576,7 @@
     buildChecks(); applyI18n(); renderPlanForm();
     $('#loc').value = state.place;
     $('#ci-date').value = TODAY; $('#ci-date').max = TODAY;
-    $('#lang').addEventListener('change', function () { state.lang = this.value; persist(); renderAll(); refreshShareText(); });
+    $('#lang').addEventListener('change', function () { state.lang = this.value; persist(); renderFcStatus(); renderAll(); refreshShareText(); });
     $('#loc').addEventListener('change', function () {
       var v = this.value;
       if (v === 'mine') {
@@ -562,7 +587,7 @@
         }, function () { sel.value = state.place; $('#fc-status').textContent = t('geo_denied', { place: prevName }); }, { timeout: 10000, maximumAge: 600000 });
       } else { state.place = v; persist(); fetchForecast(); }
     });
-    $('#refresh').addEventListener('click', fetchForecast);
+    $('#refresh').addEventListener('click', function () { fetchForecast(true); });
     $('#p-best').addEventListener('input', renderThresholds);
     $('#plan-form').addEventListener('submit', function (ev) {
       ev.preventDefault();
@@ -597,7 +622,7 @@
     });
     $('#wipe').addEventListener('click', function () {
       if (!window.confirm(t('wipe_confirm'))) return;
-      [KEY, DEMO_KEY, FC_KEY].forEach(function (k) { localStorage.removeItem(k); });
+      [KEY, DEMO_KEY, FC_KEY].forEach(function (k) { localStorage.removeItem(k); }); FC.clear(localStorage);
       state = { lang: state.lang, place: 'sugarland', custom: null, searched: null, plan: { triggers: [] }, entries: [] }; demo = null;
       persist(); renderPlanForm(); $('#ci-result').hidden = true; $('#data-msg').textContent = t('wiped'); renderAll(); fetchForecast();
     });
@@ -608,7 +633,8 @@
     if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
       navigator.serviceWorker.register('sw.js').catch(function () { /* app still works online */ });
     }
-    window.addEventListener('online', function () { fetchForecast(); });
+    window.addEventListener('online', function () { fetchForecast(true); });
+    setInterval(renderFcStatus, 60000); // keep "as of N min ago" honest
   }
   init();
 })();
