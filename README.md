@@ -1,6 +1,12 @@
 # BreatheEasy 🫁
 
+**Live demo:** https://aariv.me/Breatheasy/ (goes live once GitHub Pages is switched on for this repo; until then, run it locally in one command, see [Run it](#run-it)). Add `?demo=1` for the labelled synthetic demo.
+
 **Your asthma action plan, matched to tomorrow's air.**
+
+![BreatheEasy Air tab: tomorrow's forecast for Sugar Land, TX with a Moderate AQI of 52, main pollutant PM2.5 and EPA's advice](docs/hero.png)
+
+*Screenshot of the app served locally with real Open-Meteo data (Oct 2026), taken with headless Chromium.*
 
 BreatheEasy puts two things that usually live apart on one screen: the **asthma action plan** a doctor gives a family (green / yellow / red zones) and **tomorrow's ozone, particle-pollution and pollen forecast** for where you live. Each evening it tells you:
 
@@ -80,6 +86,14 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 - Export data as JSON; delete everything in one tap
 - Clear error when the forecast can't load (e.g. Open-Meteo's daily rate limit), with the last saved forecast kept
 
+## Tech
+
+- Plain **HTML, CSS and JavaScript** (classic scripts). No framework, no build step, no backend, no API keys, no tracking.
+- On-device machine learning: a hand-written logistic regression in `js/model.js` (no ML library), trained in the browser on the user's own check-ins.
+- **PWA**: `manifest.webmanifest` + `sw.js` for install and offline use; `scripts/stamp.js` for cache-busting.
+- Data in `localStorage` only; JSON export and one-tap delete.
+- Tests: Node's built-in test runner (`node --test`) and Playwright driving headless Chromium.
+
 ## Accessibility
 
 Semantic landmarks and headings, skip link, every control labelled, live regions for results, color never the only signal (every AQI color carries its category name; every zone its name), ≥ 44 px touch targets, visible focus rings, `prefers-reduced-motion` respected, `lang` switches with the language, chart mirrored by a data table for screen readers. Mobile-first and tested at 390 px.
@@ -95,6 +109,8 @@ python3 -m http.server 8000   # then http://localhost:8000
 Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY-MM-DD` pins "today" (used by the tests).
 
 ## Tests
+
+Last run Oct 10, 2026: **58/58 unit tests and 83/83 end-to-end checks passing**.
 
 ```bash
 node --test tests/*.test.js                          # 58 unit tests: AQI math, zones, forecast parsing, model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note
@@ -129,17 +145,25 @@ tests/              node unit tests, Playwright e2e, real API fixtures
 onepager.pdf        one-page project description (DSH Hacks submission)
 ```
 
-## Limits
+## Limits and honesty
 
 - Forecasts are model estimates (CAMS via Open-Meteo, ~11 km grid), not monitor readings. Official local forecasts and Ozone Action Days: [AirNow](https://www.airnow.gov/).
 - Ozone above 0.200 ppm (8-h) has no EPA 8-hour breakpoint; the app caps at 300 (Very Unhealthy).
 - No U.S. pollen forecast from a free, keyless, CORS-enabled source; pollen is user-logged for U.S. locations.
 - The model is only as good as the check-ins; with sparse logs it stays silent. Its calibration and sensitivity numbers come from SYNTHETIC people with a planted pattern, not from patients.
+- There is no hosted demo yet: GitHub Pages still has to be enabled for this repo.
 - Offline mode shows the last forecast saved on this device; it cannot get a new forecast without a connection.
 
 ## AI-assistance disclosure
 
 This project was built with help from an AI coding assistant (Hark), which drafted code, tests and copy under Aariv Patel's direction. Every statistic and guideline above was checked against the linked source pages.
+
+## Data sources
+
+- **Forecast:** Open-Meteo Air Quality API (Copernicus CAMS: hourly PM2.5, ozone, US AQI, pollen in Europe) and Open-Meteo Weather API (daily high temperature, humidity). Free, keyless, called straight from the browser.
+- **Pollen in the U.S.:** logged by the user from the Houston Health Department daily count (no free U.S. pollen forecast exists).
+- **Rules:** EPA AQI breakpoints and guidance, NHLBI Asthma Action Plan zones, CDC Spanish asthma terms.
+- **Model data:** only the user's own check-ins, on their device. Demo and calibration data are SYNTHETIC and labelled.
 
 ## Sources
 
