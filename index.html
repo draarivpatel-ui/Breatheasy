@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BreatheEasy: asthma action plan × tomorrow's air</title>
+  <meta name="description" content="A private, on-device asthma action plan that matches your doctor's plan to Houston's ozone, particle and pollen forecast.">
+  <meta name="theme-color" content="#0f4c5c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f4c5c'/%3E%3Cpath d='M14 38c8 0 10-8 18-8s10 8 18 8M14 26c8 0 10-8 18-8s10 8 18 8' stroke='%23fff' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
+
+  <header class="top">
+    <div class="wrap top-row">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14"/><path d="M14 38c8 0 10-8 18-8s10 8 18 8M14 26c8 0 10-8 18-8s10 8 18 8"/></svg>
+        <div>
+          <h1 class="name">BreatheEasy</h1>
+          <p class="tagline" data-i18n="tagline">Your asthma action plan, matched to tomorrow's air.</p>
+        </div>
+      </div>
+      <label class="lang"><span class="sr-only" data-i18n="lang_label">Language</span>
+        <select id="lang" aria-label="Language / Idioma">
+          <option value="en" lang="en">EN</option>
+          <option value="es" lang="es">ES</option>
+        </select>
+      </label>
+    </div>
+    <div class="safety" role="note">
+      <div class="wrap">
+        <p data-i18n="safety">BreatheEasy helps you follow the plan your doctor gave you. It does not diagnose, prescribe, or replace medical care.</p>
+        <p class="safety-911"><strong data-i18n="safety_911">Trouble walking or talking because of shortness of breath, or blue lips or fingernails? Call 911 now.</strong>
+          <a class="btn-911" href="tel:911" data-i18n="call911">Call 911</a></p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Sections">
+    <div class="wrap tabs-row">
+      <a href="#today" data-i18n="nav_today">Air</a>
+      <a href="#checkin" data-i18n="nav_checkin">Check in</a>
+      <a href="#plan" data-i18n="nav_plan">My plan</a>
+      <a href="#insights" data-i18n="nav_insights">Insights</a>
+      <a href="#about" data-i18n="nav_about">About</a>
+    </div>
+  </nav>
+
+  <main id="main" class="wrap" tabindex="-1">
+
+    <!-- AIR OUTLOOK -->
+    <section id="today" aria-labelledby="today-h">
+      <div class="section-head">
+        <h2 id="today-h" data-i18n="today_h">Air outlook</h2>
+        <div class="loc">
+          <label for="loc" data-i18n="loc_label">Location</label>
+          <select id="loc">
+            <option value="sugarland" data-i18n="loc_sugarland">Sugar Land, TX</option>
+            <option value="houston" data-i18n="loc_houston">Houston, TX (downtown)</option>
+            <option value="pasadena" data-i18n="loc_pasadena">Pasadena, TX</option>
+            <option value="mine" data-i18n="loc_mine">Use my location</option>
+          </select>
+          <button type="button" id="refresh" class="btn ghost" data-i18n="refresh">Refresh</button>
+        </div>
+      </div>
+      <p id="fc-status" class="status" role="status" aria-live="polite"></p>
+
+      <article id="plan-card" class="card plan-card" aria-labelledby="pc-h">
+        <div class="pc-top">
+          <div>
+            <p class="eyebrow" data-i18n="tomorrow">Tomorrow</p>
+            <h3 id="pc-h"><span id="pc-date">—</span></h3>
+            <p id="pc-cat" class="pc-cat"></p>
+          </div>
+          <div id="pc-aqi" class="aqi-badge" aria-live="polite">
+            <span class="aqi-num">—</span><span class="aqi-label" data-i18n="aqi">AQI</span>
+          </div>
+        </div>
+        <dl id="pc-facts" class="facts"></dl>
+        <h4 data-i18n="plan_card_h">What to do tomorrow</h4>
+        <ul id="pc-items" class="guidance"></ul>
+        <div class="outlook" id="pc-outlook">
+          <h4 data-i18n="your_outlook">Your personal outlook</h4>
+          <p id="pc-risk"></p>
+        </div>
+        <div class="actions no-print">
+          <button type="button" class="btn" id="ics" data-i18n="add_cal">Add to calendar</button>
+          <button type="button" class="btn ghost" id="print" data-i18n="print">Print plan</button>
+        </div>
+        <p id="fc-source" class="fine"></p>
+      </article>
+
+      <h3 class="sub" data-i18n="four_day">Next days</h3>
+      <ol id="strip" class="strip" aria-label="Daily air quality"></ol>
+    </section>
+
+    <!-- CHECK-IN -->
+    <section id="checkin" aria-labelledby="checkin-h">
+      <h2 id="checkin-h" data-i18n="checkin_h">Daily check-in</h2>
+      <p class="lead" data-i18n="checkin_intro">Takes 20 seconds.</p>
+      <form id="ci-form" class="card form" novalidate>
+        <div class="row2">
+          <div class="field">
+            <label for="ci-date" data-i18n="date">Date</label>
+            <input type="date" id="ci-date" required>
+          </div>
+          <div class="field">
+            <label for="ci-pf" data-i18n="peak_flow">Peak flow (L/min)</label>
+            <input type="number" id="ci-pf" inputmode="numeric" min="50" max="900" step="1" aria-describedby="ci-pf-hint">
+            <p class="hint" id="ci-pf-hint"></p>
+          </div>
+        </div>
+        <fieldset class="sym yellow">
+          <legend><span class="dot y" aria-hidden="true"></span><span data-i18n="sym_yellow_h">Any of these?</span></legend>
+          <div class="checks" data-group="yellow"></div>
+        </fieldset>
+        <fieldset class="sym red">
+          <legend><span class="dot r" aria-hidden="true"></span><span data-i18n="sym_red_h">Any of these?</span></legend>
+          <div class="checks" data-group="red"></div>
+        </fieldset>
+        <fieldset class="sym danger">
+          <legend><span class="dot d" aria-hidden="true"></span><span data-i18n="sym_danger_h">Danger signs</span></legend>
+          <div class="checks" data-group="danger"></div>
+        </fieldset>
+        <div class="row2">
+          <div class="field">
+            <label for="ci-pollen" data-i18n="pollen_today">Pollen today</label>
+            <select id="ci-pollen" aria-describedby="ci-pollen-src">
+              <option value="" data-i18n="pollen_unknown">Not sure</option>
+              <option value="0" data-i18n="pollen_0">None</option>
+              <option value="1" data-i18n="pollen_1">Low</option>
+              <option value="2" data-i18n="pollen_2">Moderate</option>
+              <option value="3" data-i18n="pollen_3">High</option>
+            </select>
+            <p class="hint" id="ci-pollen-src"><a href="https://www.houstonhealth.org/services/pollen-mold" target="_blank" rel="noopener" data-i18n="pollen_src">Houston daily count</a></p>
+          </div>
+          <div class="field check-inline">
+            <label><input type="checkbox" id="ci-reliever"> <span data-i18n="reliever">I used quick-relief medicine today</span></label>
+          </div>
+        </div>
+        <button type="submit" class="btn" data-i18n="save_checkin">Save check-in</button>
+      </form>
+      <div id="ci-result" class="result" role="status" aria-live="polite" hidden></div>
+    </section>
+
+    <!-- PLAN -->
+    <section id="plan" aria-labelledby="plan-h">
+      <h2 id="plan-h" data-i18n="plan_h">My action plan</h2>
+      <p class="lead"><span data-i18n="plan_intro">Copy these from the asthma action plan your doctor gave you.</span>
+        <a href="https://www.nhlbi.nih.gov/resources/asthma-action-plan-2020" target="_blank" rel="noopener" data-i18n="nhlbi_form">NHLBI Asthma Action Plan (PDF)</a></p>
+      <form id="plan-form" class="card form" novalidate>
+        <div class="field">
+          <label for="p-best" data-i18n="best_pf">Personal best peak flow (L/min)</label>
+          <input type="number" id="p-best" inputmode="numeric" min="50" max="900" step="1" aria-describedby="p-thr">
+          <p class="hint" id="p-thr"></p>
+        </div>
+        <div class="field zone-g">
+          <label for="p-green" data-i18n="green_txt">Green zone: daily medicines</label>
+          <textarea id="p-green" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label for="p-ex" data-i18n="before_ex">Before exercise</label>
+          <input type="text" id="p-ex">
+        </div>
+        <div class="field zone-y">
+          <label for="p-yellow" data-i18n="yellow_txt">Yellow zone: what to add</label>
+          <textarea id="p-yellow" rows="2"></textarea>
+        </div>
+        <div class="field zone-r">
+          <label for="p-red" data-i18n="red_txt">Red zone: what to do</label>
+          <textarea id="p-red" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label for="p-phone" data-i18n="doctor_phone">Doctor's phone</label>
+          <input type="tel" id="p-phone" autocomplete="off">
+        </div>
+        <fieldset>
+          <legend data-i18n="triggers_h">My known triggers</legend>
+          <div class="checks" id="p-triggers"></div>
+        </fieldset>
+        <button type="submit" class="btn" data-i18n="save_plan">Save plan</button>
+        <p id="plan-msg" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <!-- INSIGHTS -->
+    <section id="insights" aria-labelledby="insights-h">
+      <h2 id="insights-h" data-i18n="insights_h">What your log is learning</h2>
+      <p class="lead" data-i18n="insights_intro">A small model trains right here in your browser on your own check-ins.</p>
+      <div id="demo-banner" class="demo-banner" role="note" hidden></div>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="demo-toggle" data-i18n="demo_load">Load synthetic demo data</button>
+      </div>
+      <div class="card">
+        <p id="model-status"></p>
+        <div id="why" hidden>
+          <h3 id="why-h"></h3>
+          <ul id="why-list" class="why"></ul>
+        </div>
+        <div id="weights" hidden>
+          <h3 data-i18n="weights_h">Which conditions go with your rough days</h3>
+          <p class="fine" data-i18n="weights_note"></p>
+          <div id="weights-chart" class="wchart" aria-hidden="true"></div>
+          <table class="sr-table" id="weights-table">
+            <caption class="sr-only" data-i18n="weights_h"></caption>
+            <thead><tr><th scope="col" data-i18n="feature_col">Condition</th><th scope="col" data-i18n="weight_col">Weight</th><th scope="col" data-i18n="direction_col">Direction</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <p id="eval" class="fine"></p>
+        </div>
+      </div>
+      <h3 class="sub" data-i18n="history_h">Recent check-ins</h3>
+      <ol id="history" class="history"></ol>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" aria-labelledby="about-h">
+      <h2 id="about-h" data-i18n="about_h">Why BreatheEasy</h2>
+      <div class="card prose" data-only="en" lang="en">
+        <p>About <strong>4.8 million U.S. children (6.7%)</strong> have asthma right now, and <strong>47%</strong> of them had at least one asthma attack in the past year (CDC, 2023 National Health Interview Survey). Doctors hand families a paper <strong>asthma action plan</strong> with green, yellow and red zones, but it rarely gets connected to tomorrow's air.</p>
+        <p>That matters in Houston. The American Lung Association's <em>State of the Air 2026</em> ranks the Houston-Pasadena metro <strong>6th worst in the nation for ozone</strong>, with Harris County averaging <strong>43.3 weighted unhealthy ozone days a year</strong> (2022–2024 data). EPA lists people with asthma and children and teenagers among the groups most sensitive to ozone.</p>
+        <p>BreatheEasy puts the plan and the forecast on one screen: it computes tomorrow's AQI from the forecast using EPA's breakpoints, shows EPA's advice for that level, puts <em>your doctor's own words</em> next to it, and learns from your check-ins which conditions tend to come before your rough days.</p>
+        <h3>How the "AI" works</h3>
+        <p>A logistic-regression model trains in your browser on your own check-ins (a day is "rough" if you were in the yellow or red zone). Inputs: ozone AQI, PM2.5 AQI, pollen level, high temperature, humidity, and whether yesterday was rough. It shows its learned weights, explains each prediction feature by feature, and reports an honest held-out accuracy next to a naive baseline. It needs at least 14 days with some good and some rough days before it says anything. It finds patterns in <em>your</em> data; it does not diagnose and it is not a medical device.</p>
+        <h3 data-i18n="limits_h">Limits</h3>
+        <ul>
+          <li>Forecasts are model estimates (Open-Meteo / Copernicus CAMS), not monitor readings. Check <a href="https://www.airnow.gov/?city=Houston&state=TX&country=USA" target="_blank" rel="noopener">AirNow</a> for official local forecasts and Ozone Action Days.</li>
+          <li>Open-Meteo has no pollen forecast for North America, so U.S. users log the Houston Health Department daily count themselves.</li>
+          <li>Guidance text is EPA's and NHLBI's general guidance. Treatment steps come only from the plan you type in from your doctor.</li>
+        </ul>
+      </div>
+      <div class="card prose" data-only="es" lang="es" hidden>
+        <p>Cerca de <strong>4.8 millones de niños en EE. UU. (6.7%)</strong> tienen asma actualmente, y el <strong>47%</strong> tuvo al menos un ataque de asma en el último año (CDC, Encuesta Nacional de Salud 2023). Los médicos dan a las familias un <strong>plan de acción para el asma</strong> en papel con zonas verde, amarilla y roja, pero casi nunca se conecta con el aire de mañana.</p>
+        <p>Eso importa en Houston. El informe <em>State of the Air 2026</em> de la American Lung Association ubica al área de Houston-Pasadena como <strong>la 6.ª peor del país en ozono</strong>, con un promedio de <strong>43.3 días ponderados de ozono dañino al año</strong> en el condado de Harris (datos 2022–2024). La EPA incluye a las personas con asma y a los niños y adolescentes entre los grupos más sensibles al ozono.</p>
+        <p>BreatheEasy pone el plan y el pronóstico en una sola pantalla: calcula el ICA de mañana con los puntos de corte de la EPA, muestra el consejo de la EPA para ese nivel, coloca <em>las palabras de tu médico</em> al lado y aprende de tus registros qué condiciones suelen venir antes de tus días difíciles.</p>
+        <h3>Cómo funciona la "IA"</h3>
+        <p>Un modelo de regresión logística se entrena en tu navegador con tus propios registros (un día es "difícil" si estuviste en zona amarilla o roja). Muestra sus pesos, explica cada predicción y reporta una precisión honesta con días que no usó para entrenar. Necesita al menos 14 días antes de dar un pronóstico. Encuentra patrones en <em>tus</em> datos; no diagnostica y no es un dispositivo médico.</p>
+        <h3 data-i18n="limits_h">Límites</h3>
+        <ul>
+          <li>Los pronósticos son estimaciones de modelos (Open-Meteo / Copernicus CAMS), no lecturas de monitores. Consulta <a href="https://www.airnow.gov/?city=Houston&state=TX&country=USA" target="_blank" rel="noopener">AirNow</a> para pronósticos oficiales.</li>
+          <li>Open-Meteo no tiene pronóstico de polen para Norteamérica; en EE. UU. anotas tú el conteo diario del Departamento de Salud de Houston.</li>
+          <li>Los consejos son guías generales de la EPA y el NHLBI. Los pasos de tratamiento vienen solo del plan que escribes desde tu médico.</li>
+        </ul>
+      </div>
+
+      <div class="card prose">
+        <h3 data-i18n="sources_h">Sources</h3>
+        <ul class="sources">
+          <li>NHLBI. <a href="https://www.nhlbi.nih.gov/sites/default/files/publications/Asthma-Action-Plan-2020_rev_508.pdf" target="_blank" rel="noopener">Asthma Action Plan</a> (2020; zones and peak-flow percentages, trigger tips).</li>
+          <li>CDC. <a href="https://www.cdc.gov/asthma/most_recent_national_asthma_data.htm" target="_blank" rel="noopener">Most Recent National Asthma Data</a> (2023 NHIS).</li>
+          <li>American Lung Association. <a href="https://www.lung.org/media/press-releases/fy26-sota-texas" target="_blank" rel="noopener">State of the Air 2026, Texas</a>.</li>
+          <li>U.S. EPA. <a href="https://www.ecfr.gov/current/title-40/chapter-I/subchapter-C/part-58/appendix-Appendix%20G%20to%20Part%2058" target="_blank" rel="noopener">AQI breakpoints, 40 CFR Part 58 App. G</a>; <a href="https://www.airnow.gov/aqi/aqi-basics/" target="_blank" rel="noopener">AQI Basics</a>; <a href="https://document.airnow.gov/air-quality-guide-for-ozone.pdf" target="_blank" rel="noopener">Air Quality Guide for Ozone</a>.</li>
+          <li>Pollen levels: <a href="https://www.houstonhealth.org/services/pollen-mold" target="_blank" rel="noopener">Houston Health Department daily counts</a>; National Allergy Bureau ranges (<a href="https://forsyth.cc/eap/air_quality/pollen.aspx" target="_blank" rel="noopener">table</a>).</li>
+          <li>Data: <a href="https://open-meteo.com/en/docs/air-quality-api" target="_blank" rel="noopener">Open-Meteo Air Quality API</a> (CAMS, CC BY 4.0) and <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo Weather API</a>.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="data_h">Your data</h3>
+        <p data-i18n="data_note">Everything stays in this browser (localStorage). No account, no server, no tracking.</p>
+        <div class="actions">
+          <button type="button" class="btn ghost" id="export" data-i18n="export">Export my data (JSON)</button>
+          <button type="button" class="btn danger" id="wipe" data-i18n="wipe">Delete all my data</button>
+        </div>
+        <p id="data-msg" class="status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
+
+  <script src="js/aqi.js"></script>
+  <script src="js/zones.js"></script>
+  <script src="js/forecast.js"></script>
+  <script src="js/model.js"></script>
+  <script src="js/guidance.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/ics.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
