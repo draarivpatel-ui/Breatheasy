@@ -5,13 +5,13 @@
  * change gives new URLs and a new cache name; the old cache is deleted on activate.
  *  - Pages (navigations): network first, cached copy only when offline, so a new deploy always wins.
  *  - Versioned app files: cache first (their URL changes whenever their content does).
- *  - Other origins (the Open-Meteo forecast APIs): never cached here. The app keeps the last
- *    forecast in localStorage on this device and says so when it is offline.
+ *  - Other origins (the Open-Meteo forecast APIs): never cached here. js/fccache.js keeps the last good
+ *    forecast per place in localStorage (30 min fresh, 3 h fallback) and labels its age honestly.
  */
-var VERSION = 'be-102b11e056';
+var VERSION = 'be-d67456655c';
 var CACHE = 'breatheeasy-' + VERSION;
 var ASSETS = [
-  'styles.css', 'js/aqi.js', 'js/zones.js', 'js/forecast.js', 'js/model.js', 'js/guidance.js', 'js/demo.js',
+  'styles.css', 'js/aqi.js', 'js/zones.js', 'js/forecast.js', 'js/fccache.js', 'js/model.js', 'js/guidance.js', 'js/demo.js',
   'js/validate.js', 'js/ics.js', 'js/share.js', 'js/places.js', 'js/i18n.js', 'js/app.js'
 ];
 var SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
