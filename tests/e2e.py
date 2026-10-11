@@ -15,6 +15,7 @@ APP = (ROOT / 'index.html').as_uri()
 FIX = ROOT / 'tests' / 'fixtures'
 AQ = (FIX / 'airquality-sugarland-2026-10-10.json').read_text()
 WX = (FIX / 'weather-sugarland-2026-10-10.json').read_text()
+GEO = (FIX / 'geocode-london-2026-10-11.json').read_text()   # real Open-Meteo Geocoding answer for "London"
 SHOTS = ROOT / 'tests' / 'screenshots'
 SHOTS.mkdir(exist_ok=True)
 passed = failed = 0
@@ -35,6 +36,12 @@ def wire(page, mode='ok'):
         calls.append(url)
         if mode == 'fail':
             return route.fulfill(status=429, content_type='application/json', body=json.dumps({'error': True, 'reason': 'Daily API request limit exceeded'}))
+        if 'geocoding-api' in url:
+            if 'name=Zzqx' in url:
+                return route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body='{"generationtime_ms":0.2}')
+            if 'name=Fail' in url:
+                return route.fulfill(status=503, content_type='application/json', headers={'access-control-allow-origin': '*'}, body='{"error":true}')
+            return route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=GEO)
         body = AQ if 'air-quality-api' in url else WX
         route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=body)
     page.route('**/*open-meteo.com/**', handle)
@@ -233,6 +240,54 @@ with sync_playwright() as p:
     pg.locator('#checkin').screenshot(path=str(SHOTS / 'mobile-checkin.png'))
     pg.locator('#insights').screenshot(path=str(SHOTS / 'mobile-insights.png'))
     check('no JS errors on mobile', not m_err, m_err)
+    ctx.close()
+
+    # ---------- first visit: one-tap demo of the AI + any-city search (390px) ----------
+    print('One-tap demo + any-city search')
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
+    pg = ctx.new_page(); s_err = []
+    pg.on('pageerror', lambda e: s_err.append(str(e)))
+    pg.on('console', lambda m: s_err.append(m.text) if m.type == 'error' and 'Failed to load resource' not in m.text else None)  # the simulated 503 logs one
+    scalls = wire(pg)
+    pg.goto(APP + '?today=2026-10-10')
+    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
+    check('first visit: outlook locked, demo button offered on the Air card', '14 days' in pg.inner_text('#pc-risk') and pg.is_visible('#try-demo') and 'SYNTHETIC' in pg.inner_text('#try-demo'))
+    pg.click('#try-demo')
+    check('one tap: personal outlook shows a band + SYNTHETIC tag', pg.locator('#pc-risk .risk').count() == 1 and 'SYNTHETIC' in pg.inner_text('#pc-risk .demo-tag'), pg.inner_text('#pc-risk'))
+    check('demo button hides; Insights banner says SYNTHETIC', pg.is_hidden('#try-demo') and 'SYNTHETIC' in pg.inner_text('#demo-banner'))
+    pg.click('#demo-toggle')
+    check('removing demo brings the button back', pg.is_visible('#try-demo') and pg.locator('#pc-risk .risk').count() == 0)
+    pg.fill('#place-q', 'London'); pg.click('#place-form button[type=submit]')
+    pg.wait_for_function("document.querySelectorAll('#place-results button').length > 0")
+    names = pg.locator('#place-results button').all_inner_texts()
+    check('city search: 5 choices, biggest first', len(names) == 5 and names[0] == 'London, England, United Kingdom' and names[1] == 'London, Ontario, Canada', names)
+    check('city search used Open-Meteo Geocoding in English', any('geocoding-api.open-meteo.com' in c and 'name=London' in c and 'language=en' in c for c in scalls))
+    sw = pg.evaluate('document.documentElement.scrollWidth')
+    check('no horizontal overflow with search results at 390px', sw <= 390, sw)
+    small = pg.evaluate("""() => [...document.querySelectorAll('#place-form button, #place-q')].filter(e => e.offsetParent && e.getBoundingClientRect().height < 44).map(e => e.textContent.trim() || e.id)""")
+    check('search controls >= 44px tall', not small, small)
+    pg.locator('#today').screenshot(path=str(SHOTS / 'place-search.png'))
+    n_before = len(scalls)
+    pg.click('#place-results button >> nth=0')
+    pg.wait_for_function("document.querySelector('#fc-status').textContent === ''")
+    new = scalls[n_before:]
+    check('picking London fetches its forecast (lat 51.5085)', any('air-quality-api' in c and 'latitude=51.5085' in c for c in new) and any('/v1/forecast' in c and 'latitude=51.5085' in c for c in new), new)
+    check('location menu now shows the chosen city', pg.eval_on_selector('#loc', 'e => e.options[e.selectedIndex].text') == 'London, England, United Kingdom' and 'London' in pg.inner_text('#place-msg'))
+    pg.reload()
+    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
+    check('chosen city persists after reload', pg.input_value('#loc') == 'search' and any('latitude=51.5085' in c for c in scalls[-2:]), scalls[-2:])
+    pg.fill('#place-q', 'Zzqx'); pg.press('#place-q', 'Enter')
+    pg.wait_for_function("document.querySelector('#place-msg').textContent.includes('No place')")
+    check('no match: plain message, no buttons', pg.locator('#place-results li').count() == 0)
+    pg.fill('#place-q', 'Fail'); pg.press('#place-q', 'Enter')
+    pg.wait_for_function("document.querySelector('#place-msg').textContent.includes('not available')")
+    check('search outage: says so and keeps the current city', 'London, England' in pg.inner_text('#place-msg') and pg.input_value('#loc') == 'search', pg.inner_text('#place-msg'))
+    pg.select_option('#lang', 'es')
+    check('Spanish search labels + demo button', pg.inner_text('#place-q-label') == 'O busca cualquier ciudad' and 'SINTÉTICOS' in pg.inner_text('#try-demo'))
+    pg.select_option('#loc', 'sugarland')
+    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
+    check('switching back to a preset city works', any('latitude=29.6197' in c for c in scalls[-2:]), scalls[-2:])
+    check('no JS errors in search/demo flow', not s_err, s_err)
     ctx.close()
 
     # ---------- installable + offline (served over http so the service worker can run) ----------
