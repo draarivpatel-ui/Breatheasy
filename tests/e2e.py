@@ -205,6 +205,8 @@ with sync_playwright() as p:
     es_note = pg.input_value('#share-text')
     check('open share note switches to Spanish (CDC/AirNow terms)', 'Insalubre para grupos sensibles' in es_note and 'Nota de BreatheEasy' in es_note and 'alivio rápido' in es_note, es_note[:200])
     check('Spanish about block visible, English hidden', pg.is_visible('[data-only="es"]') and not pg.is_visible('[data-only="en"]'))
+    ab = pg.inner_text('.card.prose[data-only="es"]')
+    check('ES about: lists the model inputs and the good+rough-days rule, like EN', 'Datos de entrada' in ab and 'si el día anterior fue difícil' in ab and 'algunos días buenos y algunos difíciles' in ab and 'Ozone Action Days' in ab, ab[:200])
     pg.screenshot(path=str(SHOTS / 'desktop-es.png'), full_page=False)
     pg.select_option('#lang', 'en')
 

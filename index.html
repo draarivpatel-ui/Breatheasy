@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="BreatheEasy">
-  <link rel="stylesheet" href="styles.css?v=be-fd7d5d99b1">
+  <link rel="stylesheet" href="styles.css?v=be-bb9653ec02">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -298,10 +298,10 @@
         <p>Eso importa en Houston. El informe <em>State of the Air 2026</em> de la American Lung Association ubica al área de Houston-Pasadena como <strong>la 6.ª peor del país en ozono</strong>, con un promedio de <strong>43.3 días ponderados de ozono dañino al año</strong> en el condado de Harris (datos 2022–2024). La EPA incluye a las personas con asma y a los niños y adolescentes entre los grupos más sensibles al ozono.</p>
         <p>BreatheEasy pone el plan y el pronóstico en una sola pantalla: calcula el ICA de mañana con los puntos de corte de la EPA, muestra el consejo de la EPA para ese nivel, coloca <em>las palabras de tu médico</em> al lado y aprende de tus registros qué condiciones suelen venir antes de tus días difíciles.</p>
         <h3>Cómo funciona la "IA"</h3>
-        <p>Un modelo de regresión logística se entrena en tu navegador con tus propios registros (un día es "difícil" si estuviste en zona amarilla o roja). Muestra sus pesos, explica cada predicción y reporta una precisión honesta con días que no usó para entrenar. Necesita al menos 14 días antes de dar un pronóstico. Puedes abrir cualquier día pasado para ver qué tomó en cuenta, y una autoevaluación <strong>SINTÉTICA</strong> con personas inventadas muestra qué tan bien coinciden sus porcentajes con la realidad y cómo mejora con más días registrados. Encuentra patrones en <em>tus</em> datos; no diagnostica y no es un dispositivo médico.</p>
+        <p>Un modelo de regresión logística se entrena en tu navegador con tus propios registros (un día es "difícil" si estuviste en zona amarilla o roja). Datos de entrada: ICA de ozono, ICA de PM2.5, nivel de polen, temperatura máxima, humedad y si el día anterior fue difícil. Muestra los pesos que aprendió, explica cada predicción factor por factor y reporta una precisión honesta con días que no usó para entrenar, junto a una línea base simple. Necesita al menos 14 días, con algunos días buenos y algunos difíciles, antes de dar un pronóstico. Puedes abrir cualquier día pasado para ver qué tomó en cuenta, y una autoevaluación <strong>SINTÉTICA</strong> con personas inventadas muestra qué tan bien coinciden sus porcentajes con la realidad y cómo mejora con más días registrados. Encuentra patrones en <em>tus</em> datos; no diagnostica y no es un dispositivo médico.</p>
         <h3 data-i18n="limits_h">Límites</h3>
         <ul>
-          <li>Los pronósticos son estimaciones de modelos (Open-Meteo / Copernicus CAMS), no lecturas de monitores. Consulta <a href="https://www.airnow.gov/?city=Houston&state=TX&country=USA" target="_blank" rel="noopener">AirNow</a> para pronósticos oficiales.</li>
+          <li>Los pronósticos son estimaciones de modelos (Open-Meteo / Copernicus CAMS), no lecturas de monitores. Consulta <a href="https://www.airnow.gov/?city=Houston&state=TX&country=USA" target="_blank" rel="noopener">AirNow</a> para pronósticos oficiales locales y los días de alerta por ozono (Ozone Action Days, en inglés).</li>
           <li>Open-Meteo no tiene pronóstico de polen para Norteamérica; en EE. UU. anotas tú el conteo diario del Departamento de Salud de Houston.</li>
           <li>Los consejos son guías generales de la EPA y el NHLBI. Los pasos de tratamiento vienen solo del plan que escribes desde tu médico.</li>
         </ul>
@@ -341,18 +341,18 @@
 
   <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-fd7d5d99b1"></script>
-  <script src="js/zones.js?v=be-fd7d5d99b1"></script>
-  <script src="js/forecast.js?v=be-fd7d5d99b1"></script>
-  <script src="js/fccache.js?v=be-fd7d5d99b1"></script>
-  <script src="js/model.js?v=be-fd7d5d99b1"></script>
-  <script src="js/guidance.js?v=be-fd7d5d99b1"></script>
-  <script src="js/demo.js?v=be-fd7d5d99b1"></script>
-  <script src="js/validate.js?v=be-fd7d5d99b1"></script>
-  <script src="js/ics.js?v=be-fd7d5d99b1"></script>
-  <script src="js/share.js?v=be-fd7d5d99b1"></script>
-  <script src="js/places.js?v=be-fd7d5d99b1"></script>
-  <script src="js/i18n.js?v=be-fd7d5d99b1"></script>
-  <script src="js/app.js?v=be-fd7d5d99b1"></script>
+  <script src="js/aqi.js?v=be-bb9653ec02"></script>
+  <script src="js/zones.js?v=be-bb9653ec02"></script>
+  <script src="js/forecast.js?v=be-bb9653ec02"></script>
+  <script src="js/fccache.js?v=be-bb9653ec02"></script>
+  <script src="js/model.js?v=be-bb9653ec02"></script>
+  <script src="js/guidance.js?v=be-bb9653ec02"></script>
+  <script src="js/demo.js?v=be-bb9653ec02"></script>
+  <script src="js/validate.js?v=be-bb9653ec02"></script>
+  <script src="js/ics.js?v=be-bb9653ec02"></script>
+  <script src="js/share.js?v=be-bb9653ec02"></script>
+  <script src="js/places.js?v=be-bb9653ec02"></script>
+  <script src="js/i18n.js?v=be-bb9653ec02"></script>
+  <script src="js/app.js?v=be-bb9653ec02"></script>
 </body>
 </html>
