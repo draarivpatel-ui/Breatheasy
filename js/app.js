@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var AQI = window.BE_AQI, Z = window.BE_Zones, F = window.BE_Forecast, M = window.BE_Model,
-    G = window.BE_Guidance, DEMO = window.BE_Demo, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share;
+    G = window.BE_Guidance, DEMO = window.BE_Demo, V = window.BE_Validate, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share;
 
   var KEY = 'breatheeasy.v1', DEMO_KEY = 'breatheeasy.demo.v1', FC_KEY = 'breatheeasy.forecast.v1';
   var PLACES = {
@@ -30,6 +30,8 @@
   var demo = load(DEMO_KEY, null); // array of synthetic entries or null
   var forecast = load(FC_KEY, null); // {days, fetchedAt, place}
   var fcError = null;
+  var explainDate = null; // day picked in "Explain a past day"
+  var trustResult = null; // SYNTHETIC model check, computed once (it never uses the user's data)
 
   // Allow a fixed "today" for demos/tests: ?today=YYYY-MM-DD
   var qs = new URLSearchParams(location.search);
@@ -90,7 +92,10 @@
       $('#fc-status').textContent = '';
     }).catch(function (err) {
       fcError = (err && err.message) || 'network error';
-      $('#fc-status').textContent = t('forecast_error', { reason: fcError });
+      var offline = typeof navigator.onLine === 'boolean' && !navigator.onLine;
+      $('#fc-status').textContent = offline && forecast && forecast.fetchedAt
+        ? t('offline_note', { time: new Date(forecast.fetchedAt).toLocaleString(state.lang === 'es' ? 'es-US' : 'en-US', { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' }) })
+        : t('forecast_error', { reason: fcError });
     }).then(renderAll);
   }
 
@@ -272,7 +277,7 @@
         tb.appendChild(tr2);
       });
       var ev = tr.evaluation;
-      $('#eval').textContent = ev ? t('eval_line', { n: ev.testDays, acc: Math.round(ev.accuracy * 100), base: Math.round(ev.baseline * 100) }) : t('eval_none');
+      $('#eval').textContent = ev ? t('eval_line', { n: ev.testDays, acc: Math.round(ev.accuracy * 100), base: Math.round(ev.baseline * 100), brier: ev.brier.toFixed(2) }) : t('eval_none');
       var d = dayFor(TOMORROW);
       if (d) {
         var pred = M.predict(tr.model, featuresFor(TOMORROW));
@@ -280,8 +285,7 @@
         $('#why-h').textContent = t('why_h', { band: t('risk_' + M.band(pred.p)).toLowerCase() });
         var ul = $('#why-list'); ul.innerHTML = '';
         pred.contributions.slice(0, 4).forEach(function (c) {
-          var dayP = d.pollenLevel;
-          var v = c.value == null ? '—' : c.key === 'pollenLevel' ? (dayP == null ? t('pollen_logged', { level: t('pollen_' + c.value) }) : t('pollen_' + c.value)) : c.key === 'prevBad' ? (c.value ? '✓' : '✗') : c.key === 'tempMaxF' ? Math.round(c.value) + ' °F' : c.key === 'humidity' ? Math.round(c.value) + '%' : String(c.value);
+          var v = c.value == null ? '—' : c.key === 'pollenLevel' && d.pollenLevel == null ? t('pollen_logged', { level: t('pollen_' + c.value) }) : fmtFeature(c);
           ul.appendChild(el('li', { class: c.contribution >= 0 ? 'up' : 'down' }, t('f_' + c.feature) + ': ' + v + ' → ' + (c.contribution >= 0 ? '▲ ' + t('dir_up') : '▼ ' + t('dir_down'))));
         });
       } else $('#why').hidden = true;
@@ -292,12 +296,177 @@
     src.forEach(function (e) {
       var li = el('li', { class: 'h-item' });
       li.appendChild(el('span', { class: 'zchip z-' + e.zone }, t('zone_' + e.zone)));
-      li.appendChild(el('span', null, fmtDate(e.date, { month: 'short', day: 'numeric' }) + (e.percent != null ? ' · ' + e.percent + '%' : '') + (e.aqiO3 != null ? ' · ' + t('ozone') + ' ' + e.aqiO3 : '') + (e.synthetic ? ' · demo' : '')));
+      li.appendChild(el('span', { class: 'h-text' }, fmtDate(e.date, { month: 'short', day: 'numeric' }) + (e.percent != null ? ' · ' + e.percent + '%' : '') + (e.aqiO3 != null ? ' · ' + t('ozone') + ' ' + e.aqiO3 : '') + (e.synthetic ? ' · demo' : '')));
+      if (tr.status === 'ready') {
+        var b = el('button', { type: 'button', class: 'btn ghost btn-mini', 'data-date': e.date, 'aria-label': t('explain_btn_label', { date: fmtDate(e.date, { month: 'long', day: 'numeric' }) }) }, t('explain_btn'));
+        b.addEventListener('click', function () { explainDate = e.date; renderExplain(tr); $('#explain').scrollIntoView({ block: 'start' }); $('#explain-date').focus(); });
+        li.appendChild(b);
+      }
       hist.appendChild(li);
     });
+    renderExplain(tr);
   }
 
-  function renderAll() { applyI18n(); renderThresholds(); renderPlanCard(); renderStrip(); renderInsights(); }
+  function fmtFeature(c) {
+    if (c.value == null) return t('explain_missing');
+    if (c.key === 'pollenLevel') return t('pollen_' + c.value);
+    if (c.key === 'prevBad') return c.value ? '✓' : '✗';
+    if (c.key === 'tempMaxF') return Math.round(c.value) + '\u00a0°F';
+    if (c.key === 'humidity') return Math.round(c.value) + '%';
+    return String(c.value);
+  }
+
+  /* ---------- explain a past day ---------- */
+  function renderExplain(tr) {
+    var box = $('#explain'), out = $('#explain-out'), sel = $('#explain-date');
+    var src = trainingEntries();
+    if (!tr || tr.status !== 'ready' || !src.length) { box.hidden = true; return; }
+    box.hidden = false;
+    var dates = src.map(function (e) { return e.date; }).sort().reverse();
+    if (!explainDate || dates.indexOf(explainDate) === -1) explainDate = dates[0];
+    sel.innerHTML = '';
+    dates.forEach(function (d) {
+      var e = src.filter(function (x) { return x.date === d; })[0];
+      var o = el('option', { value: d }, fmtDate(d, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + t('zone_' + e.zone));
+      sel.appendChild(o);
+    });
+    sel.value = explainDate;
+    var x = M.explainDay(src, explainDate);
+    out.innerHTML = '';
+    if (!x || x.status !== 'ready') { out.appendChild(el('p', null, t('explain_none'))); return; }
+    var entry = src.filter(function (e) { return e.date === explainDate; })[0];
+    var head = el('p', { class: 'ex-head' });
+    head.appendChild(el('span', { class: 'zchip z-' + entry.zone }, t('zone_' + entry.zone)));
+    head.appendChild(document.createTextNode(' ' + fmtDate(explainDate) + (entry.synthetic ? ' · SYNTHETIC' : '')));
+    out.appendChild(head);
+    out.appendChild(el('p', null, t(x.actual ? 'explain_rough' : 'explain_good')));
+    out.appendChild(el('p', { class: 'ex-now' }, t('explain_now', { p: Math.round(x.p * 100), n: src.length })));
+    out.appendChild(el('p', { class: 'ex-before' }, x.before ? t('explain_before', { p: Math.round(x.before.p * 100), n: x.before.trainedDays }) : t('explain_before_none')));
+    var max = Math.max.apply(null, x.contributions.map(function (c) { return Math.abs(c.contribution); }).concat([0.5]));
+    var list = el('ol', { class: 'ex-list' });
+    var first = el('li', { class: 'ex-row ex-edge' });
+    first.appendChild(el('span', { class: 'ex-lab' }, t('explain_start')));
+    first.appendChild(el('span', { class: 'ex-val' }, Math.round(x.baseP * 100) + '%'));
+    list.appendChild(first);
+    x.contributions.forEach(function (c) {
+      var li = el('li', { class: 'ex-row ' + (c.contribution >= 0 ? 'up' : 'down') });
+      li.appendChild(el('span', { class: 'ex-lab' }, t('f_' + c.feature) + ': ' + fmtFeature(c)));
+      var track = el('span', { class: 'wtrack', 'aria-hidden': 'true' });
+      var bar = el('span', { class: 'wbar ' + (c.contribution >= 0 ? 'pos' : 'neg') });
+      bar.style.width = (Math.abs(c.contribution) / max * 50) + '%';
+      track.appendChild(bar); li.appendChild(track);
+      var flat = Math.abs(c.contribution) < 0.005;
+      li.appendChild(el('span', { class: 'ex-val' }, (flat ? '– ' : c.contribution >= 0 ? '▲ ' : '▼ ') + t('explain_odds', { x: c.oddsRatio.toFixed(c.oddsRatio < 10 ? 2 : 1) })));
+      list.appendChild(li);
+    });
+    var last = el('li', { class: 'ex-row ex-edge' });
+    last.appendChild(el('span', { class: 'ex-lab' }, t('explain_end')));
+    last.appendChild(el('span', { class: 'ex-val' }, Math.round(x.p * 100) + '%'));
+    list.appendChild(last);
+    out.appendChild(list);
+    out.appendChild(el('p', { class: 'fine' }, t('explain_note')));
+  }
+
+  /* ---------- SYNTHETIC model check: calibration + sensitivity ---------- */
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function svg(tag, attrs, text) {
+    var n = document.createElementNS(SVGNS, tag);
+    Object.keys(attrs || {}).forEach(function (a) { n.setAttribute(a, attrs[a]); });
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function pct(v) { return Math.round(v * 100) + '%'; }
+
+  function chartFrame(w, h, pad, xLab, yLab) {
+    var s = svg('svg', { viewBox: '0 0 ' + w + ' ' + h, class: 'tsvg', role: 'img' });
+    s.appendChild(svg('line', { x1: pad.l, y1: h - pad.b, x2: w - pad.r, y2: h - pad.b, class: 'ax' }));
+    s.appendChild(svg('line', { x1: pad.l, y1: pad.t, x2: pad.l, y2: h - pad.b, class: 'ax' }));
+    s.appendChild(svg('text', { x: (pad.l + w - pad.r) / 2, y: h - 4, 'text-anchor': 'middle', class: 'axl' }, xLab));
+    s.appendChild(svg('text', { x: 12, y: (pad.t + h - pad.b) / 2, 'text-anchor': 'middle', class: 'axl', transform: 'rotate(-90 12 ' + (pad.t + h - pad.b) / 2 + ')' }, yLab));
+    return s;
+  }
+
+  function relChart(rel) {
+    var w = 300, h = 260, pad = { l: 44, r: 12, t: 12, b: 40 };
+    var X = function (v) { return pad.l + v * (w - pad.l - pad.r); }, Y = function (v) { return h - pad.b - v * (h - pad.t - pad.b); };
+    var s = chartFrame(w, h, pad, t('chart_said'), t('chart_obs'));
+    [0, 0.5, 1].forEach(function (v) {
+      s.appendChild(svg('text', { x: X(v), y: h - pad.b + 14, 'text-anchor': v === 1 ? 'end' : v === 0 ? 'start' : 'middle', class: 'tick' }, pct(v)));
+      s.appendChild(svg('text', { x: pad.l - 6, y: Y(v) + 4, 'text-anchor': 'end', class: 'tick' }, pct(v)));
+    });
+    s.appendChild(svg('line', { x1: X(0), y1: Y(0), x2: X(1), y2: Y(1), class: 'diag' }));
+    var pts = rel.bins.filter(function (b) { return b.n > 0; });
+    s.appendChild(svg('polyline', { points: pts.map(function (b) { return X(b.meanP) + ',' + Y(b.observed); }).join(' '), class: 'ln model' }));
+    var maxN = Math.max.apply(null, pts.map(function (b) { return b.n; }));
+    pts.forEach(function (b) { s.appendChild(svg('circle', { cx: X(b.meanP), cy: Y(b.observed), r: 3 + 6 * Math.sqrt(b.n / maxN), class: 'dot' })); });
+    return s;
+  }
+
+  function sensChart(sens) {
+    var w = 300, h = 260, pad = { l: 44, r: 12, t: 12, b: 40 };
+    var rows = sens.filter(function (r) { return r.summary; });
+    var xs = rows.map(function (r) { return r.days; }), x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+    var X = function (v) { return pad.l + (v - x0) / (x1 - x0) * (w - pad.l - pad.r); };
+    var Y = function (v) { return h - pad.b - (v - 0.4) / 0.5 * (h - pad.t - pad.b); }; // 40%..90%
+    var s = chartFrame(w, h, pad, t('chart_days'), t('sens_col_acc'));
+    [0.4, 0.6, 0.8].forEach(function (v) { s.appendChild(svg('text', { x: pad.l - 6, y: Y(v) + 4, 'text-anchor': 'end', class: 'tick' }, pct(v))); });
+    rows.forEach(function (r) { s.appendChild(svg('text', { x: X(r.days), y: h - pad.b + 14, 'text-anchor': 'middle', class: 'tick' }, String(r.days))); });
+    function line(key, cls) {
+      s.appendChild(svg('polyline', { points: rows.map(function (r) { return X(r.days) + ',' + Y(r.summary[key]); }).join(' '), class: 'ln ' + cls }));
+    }
+    line('oracleAccuracy', 'best'); line('baselineAccuracy', 'base'); line('accuracy', 'model');
+    rows.forEach(function (r) { s.appendChild(svg('circle', { cx: X(r.days), cy: Y(r.summary.accuracy), r: 3.5, class: 'dot' })); });
+    var lg = [['model', t('legend_model')], ['base', t('legend_base')], ['best', t('legend_best')]];
+    lg.forEach(function (l, i) {
+      var y = pad.t + 8 + i * 14;
+      s.appendChild(svg('line', { x1: w - 150, y1: y, x2: w - 132, y2: y, class: 'ln ' + l[0] }));
+      s.appendChild(svg('text', { x: w - 128, y: y + 4, class: 'tick' }, l[1]));
+    });
+    return s;
+  }
+
+  function renderTrust() {
+    var st = $('#trust-status');
+    var o = V.DEFAULTS;
+    $('#trust-intro').textContent = t('trust_intro', { people: o.seeds.length, days: o.seriesDays, test: o.testDays });
+    if (!trustResult) {
+      st.textContent = t('trust_running');
+      setTimeout(function () { trustResult = V.run(); renderTrust(); }, 0);
+      return;
+    }
+    st.textContent = '';
+    var r = trustResult, rel = r.reliability, cs = r.calibrationSummary;
+    $('#rel-cap').textContent = t('rel_cap', { n: r.reliabilityAt, k: cs.n });
+    var rc = $('#rel-chart'); rc.innerHTML = ''; rc.appendChild(relChart(rel));
+    var rb = $('#rel-table tbody'); rb.innerHTML = '';
+    rel.bins.forEach(function (b) {
+      var tr = el('tr');
+      tr.appendChild(el('th', { scope: 'row' }, Math.round(b.lo * 100) + '–' + Math.round(b.hi * 100) + '%'));
+      tr.appendChild(el('td', null, b.n ? pct(b.meanP) : '—'));
+      tr.appendChild(el('td', null, b.n ? pct(b.observed) : '—'));
+      tr.appendChild(el('td', null, String(b.n)));
+      rb.appendChild(tr);
+    });
+    $('#sens-cap').textContent = t('sens_cap', { test: r.testDays, people: r.people });
+    var sc = $('#sens-chart'); sc.innerHTML = ''; sc.appendChild(sensChart(r.sensitivity));
+    var sb = $('#sens-table tbody'); sb.innerHTML = '';
+    var waitedNote = [];
+    r.sensitivity.forEach(function (row) {
+      if (!row.summary) return;
+      var tr = el('tr');
+      tr.appendChild(el('th', { scope: 'row' }, String(row.days) + (row.waited ? '*' : '')));
+      tr.appendChild(el('td', null, pct(row.summary.accuracy)));
+      tr.appendChild(el('td', null, pct(row.summary.baselineAccuracy)));
+      tr.appendChild(el('td', null, row.summary.brier.toFixed(3)));
+      sb.appendChild(tr);
+      if (row.waited) waitedNote.push('* ' + row.days + ': ' + t('sens_waited', { w: row.waited, people: r.people }));
+    });
+    $('#sens-cap').textContent += waitedNote.length ? ' ' + waitedNote.join(' ') : '';
+    $('#trust-brier').textContent = t('trust_brier', { n: r.reliabilityAt, b: cs.brier.toFixed(3), c: cs.brierClimatology.toFixed(3), o: cs.brierOracle.toFixed(3),
+      ece: (rel.ece * 100).toFixed(1), mp: Math.round(rel.meanP * 100), ob: Math.round(rel.observed * 100) });
+  }
+
+  function renderAll() { applyI18n(); renderThresholds(); renderPlanCard(); renderStrip(); renderInsights(); renderTrust(); }
 
   /* ---------- export / print ---------- */
   function download(name, mime, text) {
@@ -367,6 +536,7 @@
       else { demo = DEMO.generate(TODAY, 75, 400, 42); save(DEMO_KEY, demo); }
       renderInsights(); renderPlanCard();
     });
+    $('#explain-date').addEventListener('change', function () { explainDate = this.value; renderExplain(trained()); });
     $('#ics').addEventListener('click', onIcs);
     $('#share').addEventListener('click', onShare);
     $('#share-copy').addEventListener('click', copyShare);
@@ -383,6 +553,11 @@
     if (qs.get('demo') === '1' && !demo) { demo = DEMO.generate(TODAY, 75, 400, 42); save(DEMO_KEY, demo); }
     renderAll();
     fetchForecast();
+    // Installable + offline: only over http(s) (service workers cannot run from file://).
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* app still works online */ });
+    }
+    window.addEventListener('online', function () { fetchForecast(); });
   }
   init();
 })();
