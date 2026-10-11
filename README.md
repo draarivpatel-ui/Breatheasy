@@ -76,7 +76,7 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 - **Add to calendar** (.ics all-day event for tomorrow with the plan text) and **Print plan**
 - **Share with coach or nurse**: one tap turns tomorrow's card into a plain-text note (date, place, AQI and category, the EPA/NHLBI lines, the user's own pre-exercise text, the not-medical-advice and 911 lines). Uses the phone's share sheet when there is one, otherwise copies to the clipboard; the note stays on screen to edit first
 - When there's no pollen forecast (all U.S. locations), a pollen level logged in today's check-in is carried to tomorrow's card and the model's explanation, and labelled "today's logged count" so it is never mistaken for a forecast
-- English / Español (all UI strings; a test checks every key and placeholder)
+- English / Español (all UI strings; a test checks every key and placeholder). Spanish medical terms follow the CDC *Plan de acción para el control del asma* (sibilancias, dificultad para respirar, alivio rápido, signos de peligro, mejor puntuación), NHLBI's Spanish asthma pages (opresión en el pecho, desencadenantes) and AirNow español for AQI categories (Insalubre para grupos sensibles / Insalubre / Muy insalubre); a test guards against the retired terms. An open share note re-writes itself when you switch language, unless you have edited it.
 - Export data as JSON; delete everything in one tap
 - Clear error when the forecast can't load (e.g. Open-Meteo's daily rate limit), with the last saved forecast kept
 
@@ -97,8 +97,8 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 ## Tests
 
 ```bash
-node --test tests/*.test.js                          # 57 unit tests: AQI math, zones, forecast parsing, model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note
-CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 82 headless-Chromium checks (pip install playwright)
+node --test tests/*.test.js                          # 58 unit tests: AQI math, zones, forecast parsing, model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 83 headless-Chromium checks (pip install playwright)
 node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```
