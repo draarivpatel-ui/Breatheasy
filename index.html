@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="BreatheEasy">
-  <link rel="stylesheet" href="styles.css?v=be-bbc02b14fb">
+  <link rel="stylesheet" href="styles.css?v=be-102b11e056">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -65,10 +65,20 @@
             <option value="houston" data-i18n="loc_houston">Houston, TX (downtown)</option>
             <option value="pasadena" data-i18n="loc_pasadena">Pasadena, TX</option>
             <option value="mine" data-i18n="loc_mine">Use my location</option>
+            <option value="search" id="loc-search-opt" hidden></option>
           </select>
           <button type="button" id="refresh" class="btn ghost" data-i18n="refresh">Refresh</button>
         </div>
       </div>
+      <form id="place-form" class="place-search no-print" role="search" aria-labelledby="place-q-label">
+        <label id="place-q-label" for="place-q" data-i18n="place_label">Or find any city</label>
+        <div class="ps-row">
+          <input id="place-q" type="search" autocomplete="off" spellcheck="false" maxlength="80" aria-describedby="place-msg">
+          <button type="submit" class="btn ghost" data-i18n="place_btn">Find</button>
+        </div>
+        <p id="place-msg" class="status" role="status" aria-live="polite"></p>
+        <ul id="place-results" class="place-results"></ul>
+      </form>
       <p id="fc-status" class="status" role="status" aria-live="polite"></p>
 
       <article id="plan-card" class="card plan-card" aria-labelledby="pc-h">
@@ -88,6 +98,7 @@
         <div class="outlook" id="pc-outlook">
           <h4 data-i18n="your_outlook">Your personal outlook</h4>
           <p id="pc-risk"></p>
+          <button type="button" class="btn ghost try-demo no-print" id="try-demo" hidden data-i18n="try_demo">See it work on SYNTHETIC demo data</button>
         </div>
         <div class="actions no-print">
           <button type="button" class="btn" id="ics" data-i18n="add_cal">Add to calendar</button>
@@ -321,16 +332,17 @@
 
   <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-bbc02b14fb"></script>
-  <script src="js/zones.js?v=be-bbc02b14fb"></script>
-  <script src="js/forecast.js?v=be-bbc02b14fb"></script>
-  <script src="js/model.js?v=be-bbc02b14fb"></script>
-  <script src="js/guidance.js?v=be-bbc02b14fb"></script>
-  <script src="js/demo.js?v=be-bbc02b14fb"></script>
-  <script src="js/validate.js?v=be-bbc02b14fb"></script>
-  <script src="js/ics.js?v=be-bbc02b14fb"></script>
-  <script src="js/share.js?v=be-bbc02b14fb"></script>
-  <script src="js/i18n.js?v=be-bbc02b14fb"></script>
-  <script src="js/app.js?v=be-bbc02b14fb"></script>
+  <script src="js/aqi.js?v=be-102b11e056"></script>
+  <script src="js/zones.js?v=be-102b11e056"></script>
+  <script src="js/forecast.js?v=be-102b11e056"></script>
+  <script src="js/model.js?v=be-102b11e056"></script>
+  <script src="js/guidance.js?v=be-102b11e056"></script>
+  <script src="js/demo.js?v=be-102b11e056"></script>
+  <script src="js/validate.js?v=be-102b11e056"></script>
+  <script src="js/ics.js?v=be-102b11e056"></script>
+  <script src="js/share.js?v=be-102b11e056"></script>
+  <script src="js/places.js?v=be-102b11e056"></script>
+  <script src="js/i18n.js?v=be-102b11e056"></script>
+  <script src="js/app.js?v=be-102b11e056"></script>
 </body>
 </html>
