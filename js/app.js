@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var AQI = window.BE_AQI, Z = window.BE_Zones, F = window.BE_Forecast, M = window.BE_Model,
-    G = window.BE_Guidance, DEMO = window.BE_Demo, V = window.BE_Validate, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share;
+    G = window.BE_Guidance, P = window.BE_Places, DEMO = window.BE_Demo, V = window.BE_Validate, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share;
 
   var KEY = 'breatheeasy.v1', DEMO_KEY = 'breatheeasy.demo.v1', FC_KEY = 'breatheeasy.forecast.v1';
   var PLACES = {
@@ -52,6 +52,9 @@
     $('#lang').value = state.lang;
     $$('[data-i18n]').forEach(function (n) { n.textContent = t(n.getAttribute('data-i18n')); });
     $$('[data-only]').forEach(function (n) { n.hidden = n.getAttribute('data-only') !== state.lang; });
+    $('#place-q').placeholder = t('place_ph');
+    var so = $('#loc-search-opt');
+    so.hidden = !state.searched; so.textContent = state.searched ? state.searched.name : '';
   }
 
   /* ---------- symptom + trigger checkboxes ---------- */
@@ -78,9 +81,43 @@
   /* ---------- forecast ---------- */
   function coords() {
     if (state.place === 'mine' && state.custom) return state.custom;
+    if (state.place === 'search' && state.searched) return state.searched;
     return PLACES[state.place] || PLACES.sugarland;
   }
-  function placeName() { return state.place === 'mine' ? t('loc_mine_name') : t((PLACES[state.place] || PLACES.sugarland).key); }
+  function placeName() {
+    if (state.place === 'mine') return t('loc_mine_name');
+    if (state.place === 'search' && state.searched) return state.searched.name;
+    return t((PLACES[state.place] || PLACES.sugarland).key);
+  }
+
+  /* ---------- any-city search (Open-Meteo Geocoding) ---------- */
+  function usePlace(p) {
+    state.searched = { name: p.name, lat: p.lat, lon: p.lon }; state.place = 'search'; persist();
+    applyI18n(); $('#loc').value = 'search';
+    $('#place-results').innerHTML = ''; $('#place-q').value = '';
+    $('#place-msg').textContent = t('place_set', { place: p.name });
+    fetchForecast();
+  }
+  function onPlaceSearch(ev) {
+    ev.preventDefault();
+    var q = $('#place-q').value.trim(), ul = $('#place-results'), msg = $('#place-msg');
+    ul.innerHTML = '';
+    if (q.length < 2) { $('#place-q').focus(); return; }
+    msg.textContent = t('place_searching');
+    P.search(q, state.lang).then(function (list) {
+      if (!list.length) { msg.textContent = t('place_none', { q: q }); return; }
+      if (list.length === 1) { usePlace(list[0]); return; }
+      msg.textContent = t('place_pick');
+      list.forEach(function (p) {
+        var li = el('li'), b = el('button', { type: 'button', class: 'btn ghost' }, p.name);
+        b.addEventListener('click', function () { usePlace(p); });
+        li.appendChild(b); ul.appendChild(li);
+      });
+      ul.querySelector('button').focus();
+    }).catch(function (err) {
+      msg.textContent = t('place_error', { reason: (err && err.name === 'AbortError') ? 'timeout' : ((err && err.message) || 'network error'), place: placeName() });
+    });
+  }
 
   function fetchForecast() {
     var c = coords();
@@ -156,13 +193,15 @@
       ul.appendChild(li);
     });
     var rp = $('#pc-risk');
+    $('#try-demo').hidden = tr.status === 'ready' || !!demo;
     if (tr.status !== 'ready') rp.textContent = t('risk_none', { days: M.MIN_DAYS });
     else if (!pred) rp.textContent = t('forecast_none');
     else {
       rp.innerHTML = '';
       var b = el('span', { class: 'risk risk-' + risk }, t('risk_' + risk));
       rp.appendChild(b);
-      rp.appendChild(document.createTextNode(' · ' + Math.round(pred.p * 100) + '%' + (demo ? ' (demo)' : '')));
+      rp.appendChild(document.createTextNode(' · ' + Math.round(pred.p * 100) + '%'));
+      if (demo) rp.appendChild(el('span', { class: 'demo-tag' }, t('demo_tag')));
     }
     var src = $('#fc-source');
     src.textContent = forecast && forecast.fetchedAt ? t('source_line', { time: new Date(forecast.fetchedAt).toLocaleString(state.lang === 'es' ? 'es-US' : 'en-US', { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' }) }) : '';
@@ -542,6 +581,12 @@
       else { demo = DEMO.generate(TODAY, 75, 400, 42); save(DEMO_KEY, demo); }
       renderInsights(); renderPlanCard();
     });
+    $('#try-demo').addEventListener('click', function () {
+      demo = DEMO.generate(TODAY, 75, 400, 42); save(DEMO_KEY, demo);
+      renderInsights(); renderPlanCard();
+      $('#pc-risk').setAttribute('tabindex', '-1'); $('#pc-risk').focus();
+    });
+    $('#place-form').addEventListener('submit', onPlaceSearch);
     $('#explain-date').addEventListener('change', function () { explainDate = this.value; renderExplain(trained()); });
     $('#ics').addEventListener('click', onIcs);
     $('#share').addEventListener('click', onShare);
@@ -553,7 +598,7 @@
     $('#wipe').addEventListener('click', function () {
       if (!window.confirm(t('wipe_confirm'))) return;
       [KEY, DEMO_KEY, FC_KEY].forEach(function (k) { localStorage.removeItem(k); });
-      state = { lang: state.lang, place: 'sugarland', custom: null, plan: { triggers: [] }, entries: [] }; demo = null;
+      state = { lang: state.lang, place: 'sugarland', custom: null, searched: null, plan: { triggers: [] }, entries: [] }; demo = null;
       persist(); renderPlanForm(); $('#ci-result').hidden = true; $('#data-msg').textContent = t('wiped'); renderAll(); fetchForecast();
     });
     if (qs.get('demo') === '1' && !demo) { demo = DEMO.generate(TODAY, 75, 400, 42); save(DEMO_KEY, demo); }
