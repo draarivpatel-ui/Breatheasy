@@ -80,8 +80,10 @@
       });
       return {
         date: date, hours: idx.length,
-        pm25: pm25 == null ? null : Math.round(pm25 * 10) / 10,
-        o3ppm: o3ppm == null ? null : Math.round(o3ppm * 1000) / 1000,
+        // Shown as the EPA-truncated values the AQI was computed from (0.1 ug/m3, 0.001 ppm), so the
+        // numbers on screen reproduce the AQI by hand: 0.0826 ppm is shown as 82 ppb (AQI 140), not 83 (143).
+        pm25: pm25 == null ? null : AQI.truncate(pm25, 1),
+        o3ppm: o3ppm == null ? null : AQI.truncate(o3ppm, 3),
         aqiPM25: aPM, aqiO3: aO3, aqi: aqi, dominant: dominant,
         openMeteoMaxAqi: omMax, pollen: pollen
       };

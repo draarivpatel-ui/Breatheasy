@@ -30,9 +30,9 @@ Built for **DSH Hacks V2** (theme: AI × Healthcare).
 3. Run the tests (Node 18+, no install):
    ```bash
    git clone https://github.com/draarivpatel-ui/Breatheasy && cd Breatheasy
-   npm test        # node --test; ends with "# pass 97" and "# fail 0"
+   npm test        # node --test; ends with "# pass 98" and "# fail 0"
    ```
-   Optional: `python3 tests/e2e.py` (Playwright) runs 134 headless-Chromium checks against saved real API responses.
+   Optional: `python3 tests/e2e.py` (Playwright) runs 135 headless-Chromium checks against saved real API responses.
 
 ## Why
 
@@ -49,7 +49,7 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
    - PM2.5: 24-hour mean (needs ≥ 18 of 24 hours), truncated to 0.1 µg/m³.
    - Ozone: highest 8-hour running mean that begins during the day (needs ≥ 6 of 8 hours), converted µg/m³ → ppm at 25 °C (`ppb = µg/m³ × 24.45 / 48.00`), truncated to 0.001 ppm.
    - Linear interpolation over the breakpoints in [40 CFR Part 58, App. G, Table 2](https://www.ecfr.gov/current/title-40/chapter-I/subchapter-C/part-58/appendix-Appendix%20G%20to%20Part%2058), including the **2024 PM2.5 update** (Good now ends at 9.0 µg/m³; [EPA fact sheet](https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf)). The day's AQI is the higher pollutant.
-   - Cross-check: on the real 2026-10-10 Sugar Land forecast, our method gives **140** (ozone 0.083 ppm); Open-Meteo's own peak hourly US AQI was **143**. The app shows both.
+   - Cross-check: on the real 2026-10-10 Sugar Land forecast, our method gives **140** (8-hour ozone 0.0826 ppm, truncated to 0.082 ppm as EPA requires; the app shows that 82 ppb so the AQI can be checked by hand); Open-Meteo's own peak hourly US AQI was **143**. The app shows both.
 3. **Zones** (`js/zones.js`) follow the [NHLBI Asthma Action Plan (2020)](https://www.nhlbi.nih.gov/sites/default/files/publications/Asthma-Action-Plan-2020_rev_508.pdf): green ≥ 80 % of personal-best peak flow, yellow 50–79 %, red < 50 %; the plan's yellow and red symptom lists; the worse of peak flow and symptoms wins; the plan's danger signs trigger a 911 alert.
 4. **Guidance** (`js/guidance.js`) picks lines from EPA's AQI guidance and NHLBI's trigger tips, plus the text **you** copied from your doctor's plan. The app never generates medication names, doses or treatment steps.
 5. **Pollen** – Open-Meteo's pollen forecast covers Europe only, so for U.S. locations the app says so plainly and lets you log the [Houston Health Department daily count](https://www.houstonhealth.org/services/pollen-mold) when you check in. Where grain counts exist they're bucketed with the National Allergy Bureau ranges (tree 15/90/1500, grass 5/20/200, weed 10/50/500 grains/m³; [table](https://forsyth.cc/eap/air_quality/pollen.aspx)).
@@ -124,11 +124,11 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 11, 2026: **97/97 unit tests and 134/134 end-to-end checks passing**. GitHub Actions (`.github/workflows/tests.yml`) runs both on every push to `main`.
+Last run Oct 11, 2026: **98/98 unit tests and 135/135 end-to-end checks passing**. GitHub Actions (`.github/workflows/tests.yml`) runs both on every push to `main`.
 
 ```bash
-node --test tests/*.test.js                          # 97 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish)
-CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 134 headless-Chromium checks (pip install playwright)
+node --test tests/*.test.js                          # 98 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish)
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 135 headless-Chromium checks (pip install playwright)
 node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```

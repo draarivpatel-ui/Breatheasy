@@ -21,7 +21,7 @@ test('one summary per date; 11 days in fixture', () => {
 test('2026-10-10: ozone-driven Unhealthy-for-Sensitive-Groups day', () => {
   const d = F.dailyAirQuality(aq.hourly).find(x => x.date === '2026-10-10');
   assert.equal(d.dominant, 'ozone');
-  assert.equal(d.o3ppm, 0.083);
+  assert.equal(d.o3ppm, 0.082); // EPA truncation of the 8-h mean (0.0826 ppm), the value the AQI uses
   assert.equal(d.aqiO3, 140);
   assert.equal(d.aqi, 140);
   assert.equal(d.pm25, 18.1);
@@ -70,4 +70,17 @@ test('load() parses both APIs and tolerates a weather failure', async () => {
 test('load() surfaces the API error reason (e.g. rate limit)', async () => {
   const fake = () => Promise.resolve({ ok: false, status: 429, json: () => Promise.resolve({ error: true, reason: 'Daily API request limit exceeded' }) });
   await assert.rejects(F.load(1, 2, fake), /limit exceeded/);
+});
+
+test('every day: the concentrations shown reproduce the AQI shown (EPA truncation, not rounding)', () => {
+  const A = require('../js/aqi.js');
+  const days = F.dailyAirQuality(aq.hourly);
+  for (const d of days) {
+    if (d.o3ppm != null) assert.equal(A.aqiO3ppm(d.o3ppm), d.aqiO3, d.date + ' ozone');
+    if (d.pm25 != null) assert.equal(A.aqiPM25(d.pm25), d.aqiPM25, d.date + ' pm2.5');
+    if (d.o3ppm != null) assert.equal(A.truncate(d.o3ppm, 3), d.o3ppm, d.date + ' ozone has at most 3 decimals');
+  }
+  const oct10 = days.find(x => x.date === '2026-10-10');
+  // by hand, EPA 2024 table: (150-101)/(0.085-0.071) * (0.082-0.071) + 101 = 139.5 -> 140
+  assert.equal(Math.round((49 / 0.014) * (oct10.o3ppm - 0.071) + 101), 140);
 });
