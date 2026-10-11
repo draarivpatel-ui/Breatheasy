@@ -176,6 +176,11 @@ with sync_playwright() as p:
         pg.click('#ics')
     ics = pathlib.Path(dl.value.path()).read_text()
     check('.ics has tomorrow as all-day event', 'DTSTART;VALUE=DATE:20261010' in ics and 'AQI 140' in ics, ics[:300])
+    check('calendar export confirms with a visible message', 'Calendar file downloaded' in pg.inner_text('#ics-msg'), pg.inner_text('#ics-msg'))
+    pg.select_option('#lang', 'es'); pg.wait_for_timeout(200)
+    srcs = pg.evaluate("[...document.querySelectorAll('ul.sources')].filter(u=>!u.hidden).length")
+    check('Spanish: only the Spanish Sources list shows, and the calendar message is cleared', srcs == 1 and pg.inner_text('#ics-msg') == '' and 'Plan de acci' in pg.evaluate("[...document.querySelectorAll('ul.sources')].find(u=>!u.hidden).innerText"))
+    pg.select_option('#lang', 'en'); pg.wait_for_timeout(200)
 
     # share note for a coach / school nurse
     pg.click('#share')
