@@ -493,8 +493,14 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = t('share_copied'); }, manual);
     else manual();
   }
+  var lastShareText = null;
+  function refreshShareText() {
+    // After a language switch, re-write an open share note in the new language unless the user has edited it.
+    var box = $('#share-box'), ta = $('#share-text');
+    if (box && !box.hidden && ta.value === lastShareText) { lastShareText = ta.value = shareText(); $('#share-msg').textContent = ''; }
+  }
   function onShare() {
-    var text = shareText();
+    var text = shareText(); lastShareText = text;
     $('#share-box').hidden = false; $('#share-text').value = text; $('#share-msg').textContent = '';
     if (navigator.share) {
       navigator.share({ title: 'BreatheEasy', text: text }).then(function () { $('#share-msg').textContent = t('share_done'); }, function () { /* cancelled: text stays on screen */ });
@@ -506,7 +512,7 @@
     buildChecks(); applyI18n(); renderPlanForm();
     $('#loc').value = state.place;
     $('#ci-date').value = TODAY; $('#ci-date').max = TODAY;
-    $('#lang').addEventListener('change', function () { state.lang = this.value; persist(); renderAll(); });
+    $('#lang').addEventListener('change', function () { state.lang = this.value; persist(); renderAll(); refreshShareText(); });
     $('#loc').addEventListener('change', function () {
       var v = this.value;
       if (v === 'mine') {
