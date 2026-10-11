@@ -59,6 +59,7 @@
     $$('[data-i18n]').forEach(function (n) { n.textContent = t(n.getAttribute('data-i18n')); });
     $$('[data-only]').forEach(function (n) { n.hidden = n.getAttribute('data-only') !== state.lang; });
     $('#place-q').placeholder = t('place_ph');
+    if (placeMsg) $('#place-msg').textContent = placeMsg.reason ? placeErrorText() : t(placeMsg.key, placeMsg.params);
     var so = $('#loc-search-opt');
     so.hidden = !state.searched; so.textContent = state.searched ? state.searched.name : '';
   }
@@ -97,11 +98,20 @@
   }
 
   /* ---------- any-city search (Open-Meteo Geocoding) ---------- */
+  var placeMsg = null; // {key, params}: re-worded when the language changes
+  function setPlaceMsg(key, params) { placeMsg = key ? { key: key, params: params } : null; $('#place-msg').textContent = key ? t(key, params) : ''; }
+  function placeErrorText() { return t('place_error', { place: placeMsg.params.place, reason: t(placeMsg.reason.key, placeMsg.reason.params) }); }
+  function placeReason(err) {
+    if (typeof navigator.onLine === 'boolean' && !navigator.onLine) return { key: 'reason_offline' };
+    if (err && err.name === 'AbortError') return { key: 'reason_place_timeout', params: { s: 8 } };
+    if (err && err.status) return { key: 'reason_http', params: { code: err.status } };
+    return { key: 'reason_network' };
+  }
   function usePlace(p) {
     state.searched = { name: p.name, lat: p.lat, lon: p.lon }; state.place = 'search'; persist();
     applyI18n(); $('#loc').value = 'search';
     $('#place-results').innerHTML = ''; $('#place-q').value = '';
-    $('#place-msg').textContent = t('place_set', { place: p.name });
+    setPlaceMsg('place_set', { place: p.name });
     fetchForecast();
   }
   var placeSeq = 0;
@@ -110,13 +120,13 @@
     var q = $('#place-q').value.trim(), ul = $('#place-results'), msg = $('#place-msg');
     ul.innerHTML = '';
     if (q.length < 2) { $('#place-q').focus(); return; }
-    msg.textContent = t('place_searching');
+    setPlaceMsg('place_searching');
     var mySeq = ++placeSeq;
     P.search(q, state.lang).then(function (list) {
       if (mySeq !== placeSeq) return;
-      if (!list.length) { msg.textContent = t('place_none', { q: q }); return; }
+      if (!list.length) { setPlaceMsg('place_none', { q: q }); return; }
       if (list.length === 1) { usePlace(list[0]); return; }
-      msg.textContent = t('place_pick');
+      setPlaceMsg('place_pick');
       list.forEach(function (p) {
         var li = el('li'), b = el('button', { type: 'button', class: 'btn ghost' }, p.name);
         b.addEventListener('click', function () { usePlace(p); });
@@ -125,9 +135,9 @@
       ul.querySelector('button').focus();
     }).catch(function (err) {
       if (mySeq !== placeSeq) return;
-      var off = typeof navigator.onLine === 'boolean' && !navigator.onLine;
-      var why = off ? t('reason_offline') : (err && err.name === 'AbortError') ? t('reason_timeout', { s: 8 }).replace('Open-Meteo', 'City search') : ((err && err.message) || 'network error');
-      msg.textContent = t('place_error', { reason: why, place: placeName() });
+      var r = placeReason(err), prev = placeName();
+      placeMsg = { key: 'place_error', params: { place: prev }, reason: r };
+      msg.textContent = placeErrorText();
     });
   }
 
@@ -137,10 +147,11 @@
   }
   function reasonText(err) {
     if (!err) return '';
-    if (err.rateLimited) return t('reason_429', { reason: err.message });
+    if (err.rateLimited) return t('reason_429');
     if (err.offline || (typeof navigator.onLine === 'boolean' && !navigator.onLine)) return t('reason_offline');
     if (err.timedOut) return t('reason_timeout', { s: Math.round(F.TIMEOUT_MS / 1000) });
-    return err.message || 'network error';
+    if (err.status) return t('reason_http', { code: err.status });
+    return t('reason_network');
   }
   /** The honest status line for whatever forecast is on screen (re-run every minute so "N min ago" stays true). */
   function renderFcStatus() {
@@ -375,7 +386,7 @@
     src.forEach(function (e) {
       var li = el('li', { class: 'h-item' });
       li.appendChild(el('span', { class: 'zchip z-' + e.zone }, t('zone_' + e.zone)));
-      li.appendChild(el('span', { class: 'h-text' }, fmtDate(e.date, { month: 'short', day: 'numeric' }) + (e.percent != null ? ' · ' + e.percent + '%' : '') + (e.aqiO3 != null ? ' · ' + t('ozone') + ' ' + e.aqiO3 : '') + (e.synthetic ? ' · demo' : '')));
+      li.appendChild(el('span', { class: 'h-text' }, fmtDate(e.date, { month: 'short', day: 'numeric' }) + (e.percent != null ? ' · ' + e.percent + '%' : '') + (e.aqiO3 != null ? ' · ' + t('ozone') + ' ' + e.aqiO3 : '') + (e.synthetic ? ' · ' + t('hist_demo') : '')));
       if (tr.status === 'ready') {
         var b = el('button', { type: 'button', class: 'btn ghost btn-mini', 'data-date': e.date, 'aria-label': t('explain_btn_label', { date: fmtDate(e.date, { month: 'long', day: 'numeric' }) }) }, t('explain_btn'));
         b.addEventListener('click', function () { explainDate = e.date; renderExplain(tr); $('#explain').scrollIntoView({ block: 'start' }); $('#explain-date').focus(); });
@@ -416,7 +427,7 @@
     var entry = src.filter(function (e) { return e.date === explainDate; })[0];
     var head = el('p', { class: 'ex-head' });
     head.appendChild(el('span', { class: 'zchip z-' + entry.zone }, t('zone_' + entry.zone)));
-    head.appendChild(document.createTextNode(' ' + fmtDate(explainDate) + (entry.synthetic ? ' · SYNTHETIC' : '')));
+    head.appendChild(document.createTextNode(' ' + fmtDate(explainDate) + (entry.synthetic ? ' · ' + t('explain_synth') : '')));
     out.appendChild(head);
     out.appendChild(el('p', null, t(x.actual ? 'explain_rough' : 'explain_good')));
     out.appendChild(el('p', { class: 'ex-now' }, t('explain_now', { p: Math.round(x.p * 100), n: src.length })));
