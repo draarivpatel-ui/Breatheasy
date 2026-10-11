@@ -57,6 +57,7 @@
     document.documentElement.lang = state.lang;
     $('#lang').value = state.lang;
     $$('[data-i18n]').forEach(function (n) { n.textContent = t(n.getAttribute('data-i18n')); });
+    if ($('#ics-msg')) $('#ics-msg').textContent = '';
     $$('[data-only]').forEach(function (n) { n.hidden = n.getAttribute('data-only') !== state.lang; });
     $('#place-q').placeholder = t('place_ph');
     if (placeMsg) $('#place-msg').textContent = placeMsg.reason ? placeErrorText() : t(placeMsg.key, placeMsg.params);
@@ -579,6 +580,7 @@
     var summary = 'BreatheEasy: ' + (r.day && r.guidance.category ? t('aqi') + ' ' + r.day.aqi + ' ' + catLabel(r.guidance.category) : t('tomorrow'));
     var desc = r.guidance.items.map(function (it) { return '• ' + t(it.key, it.params); }).join('\n') + '\n\n' + t('safety') + ' ' + t('safety_911');
     download('breatheeasy-' + TOMORROW + '.ics', 'text/calendar', ICS.allDayEvent(TOMORROW, summary, desc));
+    $('#ics-msg').textContent = t('cal_done');
   }
 
   function shareText() {
