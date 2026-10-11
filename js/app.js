@@ -131,7 +131,8 @@
   function reasonText(err) {
     if (!err) return '';
     if (err.rateLimited) return t('reason_429', { reason: err.message });
-    if (typeof navigator.onLine === 'boolean' && !navigator.onLine) return t('reason_offline');
+    if (err.offline || (typeof navigator.onLine === 'boolean' && !navigator.onLine)) return t('reason_offline');
+    if (err.timedOut) return t('reason_timeout', { s: Math.round(F.TIMEOUT_MS / 1000) });
     return err.message || 'network error';
   }
   /** The honest status line for whatever forecast is on screen (re-run every minute so "N min ago" stays true). */
@@ -141,7 +142,14 @@
     s.className = 'status';
     if (!fcMeta || fcMeta.source === 'network') { s.textContent = ''; return; }
     var offline = typeof navigator.onLine === 'boolean' && !navigator.onLine;
-    if (fcMeta.source === 'fallback') { s.textContent = t('fc_fallback', { reason: reasonText(fcMeta.error), asof: asOf(fcMeta.savedAt) }); s.className = 'status status-warn'; }
+    if (fcMeta.source === 'fallback') {
+      var e = fcMeta.error || {};
+      // Offline or a timed-out request gets its own plain message; the saved forecast stays on screen.
+      if (offline || e.offline) s.textContent = t('fc_offline', { asof: asOf(fcMeta.savedAt) });
+      else if (e.timedOut) s.textContent = t('fc_timeout', { s: Math.round(F.TIMEOUT_MS / 1000), asof: asOf(fcMeta.savedAt) });
+      else s.textContent = t('fc_fallback', { reason: reasonText(e), asof: asOf(fcMeta.savedAt) });
+      s.className = 'status status-warn';
+    }
     else s.textContent = t(offline ? 'fc_offline' : 'fc_cached', { asof: asOf(fcMeta.savedAt) });
   }
 
