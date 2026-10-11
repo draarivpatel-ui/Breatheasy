@@ -50,6 +50,7 @@ h4 { font-size: 1rem; margin: 16px 0 6px; }
 .lead { color: var(--muted); margin: 0 0 12px; }
 .fine { color: var(--muted); font-size: .86rem; }
 .status { color: var(--muted); min-height: 1.2em; margin: 6px 0; }
+.status-warn { color: var(--ink); font-weight: 600; border-left: 4px solid #e8a33d; padding-left: 8px; }
 .sub { margin-top: 22px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin: 12px 0; }
 .section-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px; }
