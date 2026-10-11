@@ -185,6 +185,31 @@ legend { font-weight: 700; padding: 0 6px; display: flex; align-items: center; g
   .logo rect { fill: #0f4c5c; }
   .card { box-shadow: none; border: 1px solid #999; }
   a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; }
+  /* one Letter page: tighter type and spacing, cards never split, the 911 line stays as text */
+  @page { size: letter; margin: 0.45in; }
+  body { font-size: 9.5pt; line-height: 1.28; }
+  .logo { width: 28px; height: 28px; }
+  .lang { display: none !important; }
+  .top-row { padding-top: 2px; padding-bottom: 2px; }
+  .safety p { margin: 2px 0; }
+  main { padding-top: 0; }
+  main { padding-bottom: 0; }
+  .aqi-badge { width: 72px !important; height: 72px !important; }
+  .aqi-num { font-size: 22pt !important; }
+  #pc-h { font-size: 13pt; margin: 2px 0; }
+  h3 { margin: 6px 0 3px; }
+  .outlook { padding: 6px 10px; margin-top: 6px; }
+  .strip > li { padding: 6px 8px; }
+  .strip h3, .strip p { margin: 2px 0; }
+  .top .wrap, .safety .wrap { padding-top: 4px; padding-bottom: 4px; }
+  .btn-911 { display: none !important; }
+  section { padding-top: 6px; }
+  h2 { font-size: 14pt; margin: 2px 0 4px; }
+  .card { padding: 10px 12px; margin: 6px 0; }
+  .plan-card, .strip > li { break-inside: avoid; }
+  .facts { margin: 4px 0; font-size: 10pt; gap: 1px 10px; }
+  .guidance li { margin: 2px 0; }
+  .strip { grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 4px 0; }
 }
 
 /* explain a past day */

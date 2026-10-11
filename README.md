@@ -124,11 +124,12 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 11, 2026: **101/101 unit tests and 141/141 end-to-end checks passing**. GitHub Actions (`.github/workflows/tests.yml`) runs both on every push to `main`.
+Last run Oct 11, 2026: **101/101 unit tests, 141/141 end-to-end checks and 42/42 print checks passing**. GitHub Actions (`.github/workflows/tests.yml`) runs all three on every push to `main`.
 
 ```bash
 node --test tests/*.test.js                          # 101 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish), EN/ES "Why BreatheEasy" parity (same model inputs as js/model.js, same numbers and links)
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 141 headless-Chromium checks (pip install playwright)
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/print_test.py # 42 checks: Print plan on ONE Letter page in English and Spanish (plain, SYNTHETIC demo, long personal plan + every trigger), with the place, AQI, 911 line, SYNTHETIC label and the user's own words, and no on-screen controls (needs pdfinfo/pdftotext)
 node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```

@@ -5,7 +5,8 @@
   "description": "Asthma action plan matched to tomorrow's ozone, PM2.5 and pollen forecast. Static, on-device, no keys.",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "test:e2e": "python3 tests/e2e.py"
+    "test:e2e": "python3 tests/e2e.py",
+    "test:print": "python3 tests/print_test.py"
   },
   "license": "MIT"
 }

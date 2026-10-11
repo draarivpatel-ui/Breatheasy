@@ -12,3 +12,5 @@ jobs:
         with: { python-version: '3.12' }
       - run: pip install playwright && python -m playwright install --with-deps chromium
       - run: python tests/e2e.py          # headless Chromium, APIs answered from tests/fixtures (deterministic)
+      - run: sudo apt-get install -y poppler-utils   # pdfinfo/pdftotext for the print check
+      - run: python tests/print_test.py   # Print plan: one Letter page EN/ES (plain, SYNTHETIC demo, long personal plan)

@@ -230,6 +230,7 @@
     var facts = $('#pc-facts'); facts.innerHTML = '';
     function fact(k, v) { if (v == null || v === '') return; facts.appendChild(el('dt', null, k)); facts.appendChild(el('dd', null, v)); }
     if (d) {
+      fact(t('place_fact'), placeName()); // the printed plan / screenshot must say where it is for
       fact(t('dominant'), d.dominant ? t(d.dominant) : null);
       fact(t('ozone'), d.aqiO3 != null ? t('aqi') + ' ' + d.aqiO3 + (d.o3ppm != null ? ' (' + Math.round(d.o3ppm * 1000) + ' ppb, 8 h)' : '') : null);
       fact(t('pm25'), d.aqiPM25 != null ? t('aqi') + ' ' + d.aqiPM25 + (d.pm25 != null ? ' (' + d.pm25 + ' µg/m³, 24 h)' : '') : null);
