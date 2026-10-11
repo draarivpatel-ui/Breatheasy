@@ -55,3 +55,16 @@ test('.ics: valid all-day event, escaped, folded, CRLF', () => {
 test('.ics DTEND crosses month boundary', () => {
   assert.ok(ICS.allDayEvent('2026-10-31', 'a', 'b').includes('DTEND;VALUE=DATE:20261101'));
 });
+
+const SH = require('../js/share.js');
+test('share note: heading, air line, bulleted guidance, footer; skips empty lines', () => {
+  const s = SH.note({ heading: 'H', air: 'Air: AQI 140', items: ['a', '', 'b'], footer: ['Not medical advice.', 'Call 911.'] });
+  assert.equal(s, 'H\nAir: AQI 140\n\u2022 a\n\u2022 b\n\nNot medical advice.\nCall 911.');
+});
+test('share note built from guidance invents no medication text', () => {
+  const g = G.build({ aqi: 175, dominant: 'ozone', tempMaxF: 98 }, { triggers: ['ozone'] });
+  ['en', 'es'].forEach(l => {
+    const s = SH.note({ heading: 'x', items: g.items.map(i => I.t(l, i.key, i.params)), footer: [I.t(l, 'share_footer')] });
+    assert.ok(!/albuterol|puff|inhal|dose|mg\b/i.test(s), s);
+  });
+});
