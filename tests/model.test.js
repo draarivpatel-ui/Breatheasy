@@ -56,3 +56,24 @@ test('prevBad feature links each day to the day before', () => {
 test('risk bands', () => {
   assert.equal(M.band(0.1), 'low'); assert.equal(M.band(0.35), 'elevated'); assert.equal(M.band(0.6), 'high');
 });
+test('explainDay: contributions add up, odds multipliers match, and the "before" model never saw the day', () => {
+  const d = D.generate('2026-10-10', 75, 400, 42);
+  const x = M.explainDay(d, '2026-10-01');
+  assert.equal(x.status, 'ready');
+  const logit = x.bias + x.contributions.reduce((a, c) => a + c.contribution, 0);
+  assert.ok(Math.abs(M.sigmoid(logit) - x.p) < 1e-12);
+  x.contributions.forEach(c => assert.ok(Math.abs(c.oddsRatio - Math.exp(c.contribution)) < 1e-12));
+  assert.ok(Math.abs(x.baseP - M.sigmoid(x.bias)) < 1e-12);
+  const idx = d.findIndex(e => e.date === '2026-10-01');
+  assert.equal(x.before.trainedDays, idx);
+  const manual = M.predict(M.fit(M.rows(d).slice(0, idx)), M.rows(d)[idx].x).p;
+  assert.ok(Math.abs(manual - x.before.p) < 1e-12);
+  assert.equal(x.actual, M.label(d[idx]));
+});
+test('explainDay: early days have no "before" prediction; unknown dates and thin logs are handled', () => {
+  const d = D.generate('2026-10-10', 75, 400, 42);
+  assert.equal(M.explainDay(d, d[3].date).before, null);
+  assert.equal(M.explainDay(d, '1999-01-01'), null);
+  const few = D.generate('2026-10-10', 8, 400, 1);
+  assert.equal(M.explainDay(few, few[2].date).status, 'insufficient');
+});
