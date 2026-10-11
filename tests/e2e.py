@@ -273,9 +273,11 @@ with sync_playwright() as p:
     new = scalls[n_before:]
     check('picking London fetches its forecast (lat 51.5085)', any('air-quality-api' in c and 'latitude=51.5085' in c for c in new) and any('/v1/forecast' in c and 'latitude=51.5085' in c for c in new), new)
     check('location menu now shows the chosen city', pg.eval_on_selector('#loc', 'e => e.options[e.selectedIndex].text') == 'London, England, United Kingdom' and 'London' in pg.inner_text('#place-msg'))
+    n_before = len(scalls)
     pg.reload()
     pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
-    check('chosen city persists after reload', pg.input_value('#loc') == 'search' and any('latitude=51.5085' in c for c in scalls[-2:]), scalls[-2:])
+    check('chosen city persists after reload', pg.input_value('#loc') == 'search' and pg.eval_on_selector('#loc', 'e => e.options[e.selectedIndex].text') == 'London, England, United Kingdom')
+    check('reload within 30 min reuses that city\'s saved forecast (no new API call) and says so', not any('air-quality-api' in c for c in scalls[n_before:]) and 'saved on this device (as of' in pg.inner_text('#fc-status'), (scalls[n_before:], pg.inner_text('#fc-status')))
     pg.fill('#place-q', 'Zzqx'); pg.press('#place-q', 'Enter')
     pg.wait_for_function("document.querySelector('#place-msg').textContent.includes('No place')")
     check('no match: plain message, no buttons', pg.locator('#place-results li').count() == 0)
@@ -286,7 +288,10 @@ with sync_playwright() as p:
     check('Spanish search labels + demo button', pg.inner_text('#place-q-label') == 'O busca cualquier ciudad' and 'SINTÉTICOS' in pg.inner_text('#try-demo'))
     pg.select_option('#loc', 'sugarland')
     pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
-    check('switching back to a preset city works', any('latitude=29.6197' in c for c in scalls[-2:]), scalls[-2:])
+    check('switching back to a preset city works (its own saved forecast, labelled in Spanish)', any('latitude=29.6197' in c for c in scalls) and 'guardado en este dispositivo (de hace' in pg.inner_text('#fc-status'), pg.inner_text('#fc-status'))
+    pg.click('#refresh')
+    pg.wait_for_function("document.querySelector('#fc-status').textContent === ''")
+    check('Refresh skips the saved copy and asks Open-Meteo again', any('air-quality-api' in c and 'latitude=29.6197' in c for c in scalls[-2:]), scalls[-2:])
     check('no JS errors in search/demo flow', not s_err, s_err)
     ctx.close()
 
@@ -339,7 +344,41 @@ with sync_playwright() as p:
     pg.goto(APP + '?today=2026-10-10')
     pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('limit')")
     check('rate-limit reason shown to the user', 'Daily API request limit exceeded' in pg.inner_text('#fc-status'))
+    check('no data at all: clear message, no AQI number', 'No air-quality data for Sugar Land, TX' in pg.inner_text('#fc-status') and pg.inner_text('#pc-aqi .aqi-num') == '—', pg.inner_text('#fc-status'))
     check('no crash on API failure', not f_err, f_err)
+    ctx.close()
+
+    # ---------- 429 after a good answer: per-place fallback with an honest age ----------
+    print('429 fallback')
+    ctx = browser.new_context(locale='en-US'); pg = ctx.new_page(); r_err = []
+    pg.on('pageerror', lambda e: r_err.append(str(e)))
+    mode = {'v': 'ok'}
+    def r_handle(route):
+        if mode['v'] == '429':
+            return route.fulfill(status=429, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=json.dumps({'error': True, 'reason': 'Minutely API request limit exceeded'}))
+        body = AQ if 'air-quality-api' in route.request.url else WX
+        route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=body)
+    pg.route('**/*open-meteo.com/**', r_handle)
+    pg.goto(APP + '?today=2026-10-10')
+    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
+    age = "(m) => { const k = 'breatheeasy.fccache.v1'; const c = JSON.parse(localStorage.getItem(k)); Object.values(c).forEach(e => e.savedAt -= m * 60000); localStorage.setItem(k, JSON.stringify(c)); }"
+    pg.evaluate(age, 45); mode['v'] = '429'
+    pg.reload()
+    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('Open-Meteo')")
+    st = pg.inner_text('#fc-status')
+    check('429 with a 45-min-old answer: forecast still shown', pg.inner_text('#pc-aqi .aqi-num') == '64', pg.inner_text('#pc-aqi .aqi-num'))
+    check('429 status names the rate limit and says "as of 45 min ago"', 'too many requests' in st and 'as of 45 min ago' in st, st)
+    check('source line carries the same age', 'as of 45 min ago' in pg.inner_text('#fc-source'), pg.inner_text('#fc-source'))
+    pg.select_option('#lang', 'es')
+    st = pg.inner_text('#fc-status')
+    check('Spanish fallback label: "de hace 45 min"', 'demasiadas solicitudes' in st and 'de hace 45 min' in st, st)
+    pg.locator('#today').screenshot(path=str(SHOTS / 'rate-limit-fallback.png'))
+    pg.select_option('#lang', 'en')
+    pg.evaluate(age, 150)  # now 3 h 15 min old: past the fallback limit
+    pg.reload()
+    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('No air-quality data')")
+    check('after 3 h the old answer is dropped: no AQI, clear no-data message', pg.inner_text('#pc-aqi .aqi-num') == '—' and 'last 3 hours' in pg.inner_text('#fc-status'), pg.inner_text('#fc-status'))
+    check('no JS errors in the 429 flow', not r_err, r_err)
     ctx.close()
 
     # ---------- optional live API ----------
