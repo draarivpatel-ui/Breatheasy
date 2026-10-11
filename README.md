@@ -45,7 +45,21 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 - **Features:** that day's ozone AQI, PM2.5 AQI, pollen level, high temperature, humidity, and whether the day before was rough. Features are standardised; missing values are imputed at the mean, so they contribute exactly zero.
 - **Explainable:** every prediction is broken into per-feature contributions (weight × standardised value) that add up exactly to the model's logit, so "Why tomorrow looks high" lists the real reasons. The Insights tab shows the learned weights as a bar chart plus an accessible table.
 - **Honest:** it refuses to predict until it has **14 days with at least 3 rough and 3 good days**. It reports accuracy on the **most recent 25 % of days it never trained on**, next to the "always guess the most common answer" baseline.
-- **Demo data is synthetic and labelled.** *Load synthetic demo data* (or `?demo=1`) generates 75 made-up days from a seeded random process in `js/demo.js` in which the invented person reacts to ozone, pollen and heat but not humidity. A purple banner says SYNTHETIC whenever it's shown. On that data the model ranks pollen and ozone as the top two links and scores 84 % held-out accuracy vs. a 68 % baseline (19 held-out days). That shows the pipeline works; it says nothing about real patients.
+- **Calibrated, and checked on SYNTHETIC data where the truth is known.** `js/validate.js` makes up 12 people (seeds 101–112), 200 days each, with the same hidden pattern, trains the model on their logged days and scores it **only on the 100 days that come after** (no peeking at the future). The Insights tab draws the results, tagged SYNTHETIC, with a data table behind each chart:
+  - **Reliability plot (calibration)** after 60 logged days, 1,200 held-out days: when the model says 0–20 % / 20–40 % / 40–60 % / 60–80 % / 80–100 %, the share of days that were actually rough is 14 % / 25 % / 42 % / 73 % / 89 % (its average prediction in those bins: 15 / 31 / 50 / 70 / 88 %). Expected calibration error **3.8 percentage points**; it said 57 % on average and 55 % of days were rough. It runs slightly high in the middle bins.
+  - **Brier score** (lower is better) on those held-out days: **0.172**, vs. **0.252** for guessing each person's usual rate every day and **0.157** for the best possible score (the generator's own hidden probabilities).
+  - **Sensitivity to the number of logged days:**
+
+    | Logged days | 14 | 21 | 30 | 45 | 60 | 90 |
+    |---|---|---|---|---|---|---|
+    | Model right | 62 % | 70 % | 72 % | 73 % | 75 % | 75 % |
+    | Always guess the common answer | 49 % | 49 % | 51 % | 56 % | 52 % | 53 % |
+    | Brier | 0.252 | 0.195 | 0.184 | 0.179 | 0.172 | 0.171 |
+
+    Best possible with the hidden pattern: 77 % / Brier 0.157. At 14 days, 1 of the 12 people had too few rough or good days, so the model waited (as it does in the app). Two weeks is a weak model; about three to four weeks is where it settles.
+  - These numbers show the method works **when a pattern exists**. Real logs can be noisier, depend on triggers the app does not measure, or have no pattern at all. It is not a clinical validation.
+- **Explain any past day.** Pick any logged day (or tap *Explain* in Recent check-ins) to see the starting point (an average day in that log), each condition's push in log-odds with its odds multiplier (for example "Pollen level: High ▲ ×3.02 odds"), and the result. It also shows what a model trained **only on the days before** that one would have said, so you can see whether it would have seen the day coming. The text says it shows what the model weighed, not what caused the day.
+- **Demo data is synthetic and labelled.** *Load synthetic demo data* (or `?demo=1`) generates 75 made-up days from a seeded random process in `js/demo.js` in which the invented person reacts to ozone, pollen and heat but not humidity. A purple banner says SYNTHETIC whenever it's shown. On that data the model ranks pollen and ozone as the top two links and scores 84 % held-out accuracy vs. a 68 % baseline (19 held-out days; Brier 0.12). That shows the pipeline works; it says nothing about real patients.
 - **Not a medical device.** It finds associations in one person's log; links are not proof of cause, and the risk bands (low < 35 % ≤ elevated < 60 % ≤ high) are a design choice, not clinical thresholds.
 
 ## Features
@@ -55,7 +69,10 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 - Locations: Sugar Land, Houston, Pasadena, or device geolocation
 - Daily check-in → zone, % of personal best, your plan's steps for that zone, 911 / doctor call buttons
 - My plan: personal best (with the zone cut-offs computed live), green / yellow / red text, pre-exercise medicine, doctor's phone, known triggers
-- Insights: model status, explanation for tomorrow, learned weights, held-out evaluation, recent history
+- Insights: model status, explanation for tomorrow, learned weights, held-out evaluation with Brier score, recent history
+- **Explain a past day**: feature-by-feature breakdown for any logged day, plus what the model would have said using only earlier days
+- **How much can you trust it?** SYNTHETIC calibration (reliability plot + Brier) and a sensitivity curve of accuracy vs. number of logged days
+- **Installable and offline (PWA)**: `manifest.webmanifest` + `sw.js`. Add it to the home screen; with no signal it still opens, and it shows the last saved forecast with an "You're offline" note. Cache-busting: `node scripts/stamp.js` writes a content hash into `sw.js` and every `?v=` in `index.html`, so each deploy gets fresh URLs and a fresh cache (old caches are deleted; a unit test fails if the stamp is stale). Pages are network-first; the forecast APIs are never cached by the service worker
 - **Add to calendar** (.ics all-day event for tomorrow with the plan text) and **Print plan**
 - **Share with coach or nurse**: one tap turns tomorrow's card into a plain-text note (date, place, AQI and category, the EPA/NHLBI lines, the user's own pre-exercise text, the not-medical-advice and 911 lines). Uses the phone's share sheet when there is one, otherwise copies to the clipboard; the note stays on screen to edit first
 - When there's no pollen forecast (all U.S. locations), a pollen level logged in today's check-in is carried to tomorrow's card and the model's explanation, and labelled "today's logged count" so it is never mistaken for a forecast
@@ -80,13 +97,14 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 ## Tests
 
 ```bash
-node --test tests/*.test.js                          # 44 unit tests: AQI math, zones, forecast parsing, model, guidance, i18n, .ics, share note
-CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 58 headless-Chromium checks (pip install playwright)
+node --test tests/*.test.js                          # 57 unit tests: AQI math, zones, forecast parsing, model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics, share note
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 82 headless-Chromium checks (pip install playwright)
+node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
 ```
 
 - Unit tests use EPA's own worked example (8-h ozone 0.07853333 ppm → AQI 126), every breakpoint edge, and the saved real Open-Meteo response.
-- The e2e test routes Open-Meteo calls to the fixtures and checks real flows: tomorrow's AQI 140 / orange card, the user's pre-exercise text appearing on a USG day, check-in zones (75 % → yellow, danger sign → red + 911), demo model recovering the planted pattern, .ics download, the coach/nurse share note, the labelled logged-pollen carry-over, Spanish, persistence across reload, labels and accessible names, no horizontal overflow at 390 px, 40 px+ touch targets, no JS errors, no network calls except Open-Meteo, and the API-failure message.
+- The e2e test routes Open-Meteo calls to the fixtures and checks real flows: tomorrow's AQI 140 / orange card, the user's pre-exercise text appearing on a USG day, check-in zones (75 % → yellow, danger sign → red + 911), demo model recovering the planted pattern, .ics download, the coach/nurse share note, the labelled logged-pollen carry-over, Spanish, persistence across reload, labels and accessible names, no horizontal overflow at 390 px, 40 px+ touch targets, no JS errors, no network calls except Open-Meteo, and the API-failure message. It also checks the explain-a-day view (8 rows, odds multipliers, the "before" prediction, Explain buttons), the SYNTHETIC trust card (reliability plot, 6-size sensitivity table, Brier line), and, over a local http server, the installable/offline flow: manifest served, service worker in control, one cache named with the current hash, no forecast API cached, and an offline reload that still renders tomorrow's card with the offline note.
 
 ## Files
 
@@ -99,6 +117,10 @@ js/zones.js         NHLBI action-plan zones
 js/guidance.js      which cited guidance lines apply
 js/model.js         on-device logistic regression + explanations + evaluation
 js/demo.js          seeded SYNTHETIC demo generator
+js/validate.js      SYNTHETIC model check: reliability, Brier, sensitivity to logged days
+sw.js               service worker (offline, cache-busting by content hash)
+manifest.webmanifest, icons/   install metadata + app icons
+scripts/stamp.js    writes the content hash into sw.js and index.html
 js/ics.js           calendar export
 js/share.js         plain-text note for a coach / school nurse
 js/i18n.js          English / Spanish strings
@@ -112,7 +134,8 @@ onepager.pdf        one-page project description (DSH Hacks submission)
 - Forecasts are model estimates (CAMS via Open-Meteo, ~11 km grid), not monitor readings. Official local forecasts and Ozone Action Days: [AirNow](https://www.airnow.gov/).
 - Ozone above 0.200 ppm (8-h) has no EPA 8-hour breakpoint; the app caps at 300 (Very Unhealthy).
 - No U.S. pollen forecast from a free, keyless, CORS-enabled source; pollen is user-logged for U.S. locations.
-- The model is only as good as the check-ins; with sparse logs it stays silent.
+- The model is only as good as the check-ins; with sparse logs it stays silent. Its calibration and sensitivity numbers come from SYNTHETIC people with a planted pattern, not from patients.
+- Offline mode shows the last forecast saved on this device; it cannot get a new forecast without a connection.
 
 ## AI-assistance disclosure
 
