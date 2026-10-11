@@ -7,7 +7,7 @@ Run:   pip install playwright
 By default Open-Meteo calls are answered from tests/fixtures (a real response saved on 2026-10-10)
 and the app's clock is pinned with ?today=, so results are deterministic.
 """
-import json, os, pathlib, sys, threading, functools, http.server, socketserver
+import json, os, re, pathlib, sys, threading, functools, http.server, socketserver
 from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -29,6 +29,9 @@ def check(name, cond, info=''):
         failed += 1; print('  FAIL ' + name + ('  -> ' + str(info) if info else ''))
 
 
+HELD_GEO = []
+
+
 def wire(page, mode='ok'):
     calls = []
     def handle(route):
@@ -39,6 +42,8 @@ def wire(page, mode='ok'):
         if 'geocoding-api' in url:
             if 'name=Zzqx' in url:
                 return route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body='{"generationtime_ms":0.2}')
+            if 'name=Slow' in url:
+                HELD_GEO.append(route); return   # never answer: city search must give up after 8 s
             if 'name=Fail' in url:
                 return route.fulfill(status=503, content_type='application/json', headers={'access-control-allow-origin': '*'}, body='{"error":true}')
             return route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=GEO)
@@ -186,6 +191,8 @@ with sync_playwright() as p:
     check('html lang=es', pg.get_attribute('html', 'lang') == 'es')
     check('Spanish category', pg.inner_text('#pc-cat') == 'Insalubre para grupos sensibles', pg.inner_text('#pc-cat'))
     check('Spanish model check + explain view', pg.inner_text('#trust h3') == '¿Cuánto puedes confiar en el modelo?' and 'SINTÉTICA' in pg.inner_text('#trust .synth-tag') and 'Explicar' in pg.inner_text('#explain h3'))
+    exh = pg.inner_text('#explain-out .ex-head')
+    check('ES: synthetic day labelled SINTÉTICO, history says demostración (no English tag)', 'SINTÉTICO' in exh and 'SYNTHETIC' not in exh and 'demostración' in pg.inner_text('#history') and not re.search(r'· demo\b', pg.inner_text('#history')), (exh, pg.inner_text('#history')[:120]))
     es_note = pg.input_value('#share-text')
     check('open share note switches to Spanish (CDC/AirNow terms)', 'Insalubre para grupos sensibles' in es_note and 'Nota de BreatheEasy' in es_note and 'alivio rápido' in es_note, es_note[:200])
     check('Spanish about block visible, English hidden', pg.is_visible('[data-only="es"]') and not pg.is_visible('[data-only="en"]'))
@@ -286,6 +293,23 @@ with sync_playwright() as p:
     check('search outage: says so and keeps the current city', 'London, England' in pg.inner_text('#place-msg') and pg.input_value('#loc') == 'search', pg.inner_text('#place-msg'))
     pg.select_option('#lang', 'es')
     check('Spanish search labels + demo button', pg.inner_text('#place-q-label') == 'O busca cualquier ciudad' and 'SINTÉTICOS' in pg.inner_text('#try-demo'))
+    pm = pg.inner_text('#place-msg')
+    check('ES: city-search outage message re-worded in Spanish, no English or raw HTTP text', 'no está disponible' in pm and 'error 503' in pm and not any(w in pm for w in ('not available', 'City search', 'HTTP', 'We kept')), pm)
+    check('ES: search placeholder and button in Spanish', pg.get_attribute('#place-q', 'placeholder') == 'p. ej., Phoenix, Delhi, Londres' and pg.inner_text('#place-form button[type=submit]') == 'Buscar')
+    pg.fill('#place-q', 'Zzqx'); pg.press('#place-q', 'Enter')
+    pg.wait_for_function("document.querySelector('#place-msg').textContent.includes('No encontramos')")
+    check('ES: no-match message in Spanish', 'No encontramos' in pg.inner_text('#place-msg') and 'No place' not in pg.inner_text('#place-msg'), pg.inner_text('#place-msg'))
+    pg.fill('#place-q', 'Slow'); pg.press('#place-q', 'Enter')
+    pg.wait_for_function("document.querySelector('#place-msg').textContent.includes('8 segundos')", timeout=20000)
+    pm = pg.inner_text('#place-msg')
+    check('ES: city-search 8 s timeout worded in Spanish (no "City search")', 'no respondió en 8 segundos' in pm and 'City search' not in pm and 'didn' not in pm, pm)
+    for r in HELD_GEO:
+        try: r.abort()
+        except Exception: pass
+    HELD_GEO.clear()
+    sw = pg.evaluate('document.documentElement.scrollWidth')
+    check('ES: no horizontal overflow at 390px (search messages + SYNTHETIC button)', sw <= 390, sw)
+    pg.locator('#today').screenshot(path=str(SHOTS / 'place-search-es.png'))
     pg.select_option('#loc', 'sugarland')
     pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
     check('switching back to a preset city works (its own saved forecast, labelled in Spanish)', any('latitude=29.6197' in c for c in scalls) and 'guardado en este dispositivo (de hace' in pg.inner_text('#fc-status'), pg.inner_text('#fc-status'))
@@ -343,7 +367,7 @@ with sync_playwright() as p:
     wire(pg, 'fail')
     pg.goto(APP + '?today=2026-10-10')
     pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('limit')")
-    check('rate-limit reason shown to the user', 'Daily API request limit exceeded' in pg.inner_text('#fc-status'))
+    check('rate-limit reason shown to the user (in our own EN/ES wording)', 'too many requests (rate limit reached)' in pg.inner_text('#fc-status'), pg.inner_text('#fc-status'))
     check('no data at all: clear message, no AQI number', 'No air-quality data for Sugar Land, TX' in pg.inner_text('#fc-status') and pg.inner_text('#pc-aqi .aqi-num') == '—', pg.inner_text('#fc-status'))
     check('no crash on API failure', not f_err, f_err)
     ctx.close()
@@ -372,6 +396,7 @@ with sync_playwright() as p:
     pg.select_option('#lang', 'es')
     st = pg.inner_text('#fc-status')
     check('Spanish fallback label: "de hace 45 min"', 'demasiadas solicitudes' in st and 'de hace 45 min' in st, st)
+    check('ES 429 status carries no English (API reason not pasted in)', not any(w in st for w in ('limit exceeded', 'Minutely', 'too many', 'as of')), st)
     pg.locator('#today').screenshot(path=str(SHOTS / 'rate-limit-fallback.png'))
     pg.select_option('#lang', 'en')
     pg.evaluate(age, 150)  # now 3 h 15 min old: past the fallback limit
@@ -407,7 +432,7 @@ with sync_playwright() as p:
     check('timeout message is clear and honest about age (EN)', 'didn\u2019t answer within 8 seconds' in st and 'as of 40 min ago' in st and 'Refresh' in st, st)
     check('timeout message styled as a warning', 'status-warn' in (pg.get_attribute('#fc-status', 'class') or ''))
     pg.select_option('#lang', 'es'); st = pg.inner_text('#fc-status')
-    check('timeout message in Spanish', 'no respondi\u00f3 en 8 segundos' in st and 'de hace 40 min' in st, st)
+    check('timeout message in Spanish', 'no respondi\u00f3 en 8 segundos' in st and 'de hace 40 min' in st and 'didn' not in st and 'Refresh' not in st, st)
     pg.locator('#today').screenshot(path=str(SHOTS / 'timeout-fallback-es.png'))
     pg.select_option('#lang', 'en')
     pg.evaluate("localStorage.removeItem('breatheeasy.fccache.v1')")
@@ -430,7 +455,7 @@ with sync_playwright() as p:
     check('offline Refresh: answers at once (no 8 s wait)', took < 4, round(took, 1))
     check('offline: last result kept (AQI 64) with an offline note and its age', pg.inner_text('#pc-aqi .aqi-num') == '64' and 'You\u2019re offline' in st and 'as of 40 min ago' in st, st)
     pg.select_option('#lang', 'es'); st = pg.inner_text('#fc-status')
-    check('offline note in Spanish', 'sin conexi\u00f3n' in st and 'de hace 40 min' in st, st)
+    check('offline note in Spanish', 'sin conexi\u00f3n' in st and 'de hace 40 min' in st and 'offline' not in st, st)
     pg.select_option('#lang', 'en')
     ctx.set_offline(False)
     check('no JS errors in the slow/offline flow', not n_err, n_err)
