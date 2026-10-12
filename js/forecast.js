@@ -32,10 +32,13 @@
 
   /** Highest 8-hour running mean of ozone (µg/m³) whose window *begins* on `date`.
    *  A window needs at least 6 of 8 valid hours (EPA 75% completeness rule). */
+  // EPA daily max 8-hour ozone (2015 data handling, AQI TAD FAQ): only the 17 moving 8-hour periods that
+  // START from 7 AM (7 AM-3 PM) through 11 PM (11 PM-7 AM next day), local time; each needs >= 6 of 8 hours.
   function maxOzone8h(times, ozone, date) {
     var best = null;
     for (var i = 0; i < times.length; i++) {
       if (times[i].slice(0, 10) !== date) continue;
+      if (+times[i].slice(11, 13) < 7) continue;
       if (i + 8 > times.length) break;
       var win = ozone.slice(i, i + 8).filter(isNum);
       if (win.length < 6) continue;

@@ -2,6 +2,7 @@
  * Breakpoints: 40 CFR Part 58, Appendix G, Table 2 (as amended Feb 2024, effective May 6, 2024)
  * https://www.ecfr.gov/current/title-40/chapter-I/subchapter-C/part-58/appendix-Appendix%20G%20to%20Part%2058
  * PM2.5 update: https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf
+ * Method + worked examples: EPA AQI Technical Assistance Document, https://document.airnow.gov/technical-assistance-document-for-the-reporting-of-daily-air-quailty.pdf
  */
 (function (root) {
   'use strict';
@@ -47,8 +48,11 @@
         return Math.round(((r[3] - r[2]) / (r[1] - r[0])) * (c - r[0]) + r[2]);
       }
     }
-    // above the top breakpoint
-    if (c > table[table.length - 1][1]) return table[table.length - 1][3];
+    // Above the top breakpoint. PM2.5 (AQI TAD May 2024/2026, Table 6 note 4 + FAQ): values above 500 use
+    // Equation 1 with the 301-500 segment's slope, no cap ("Beyond the AQI" days in wildfire smoke stay honest).
+    // 8-hour ozone defines no AQI of 301 or more (those come from 1-hour ozone), so it stays capped at 300.
+    var top = table[table.length - 1];
+    if (c > top[1]) return table === PM25_24H ? Math.round(((top[3] - top[2]) / (top[1] - top[0])) * (c - top[0]) + top[2]) : top[3];
     return null;
   }
 
