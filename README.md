@@ -1,8 +1,8 @@
-# BreatheEasy 🫁
+# BreatheEasy
 
 **Live demo:** https://aariv.me/Breatheasy/ (GitHub Pages). Add `?demo=1` for the labelled synthetic demo, or run it locally in one command, see [Run it](#run-it).
 
-**Your asthma action plan, matched to tomorrow's air.**
+BreatheEasy shows tomorrow's air forecast next to your asthma action plan.
 
 ![BreatheEasy Air tab: tomorrow's forecast for Sugar Land, TX with a Moderate AQI of 52, main pollutant PM2.5 and EPA's advice](docs/hero.png)
 
@@ -15,22 +15,22 @@ BreatheEasy puts two things that usually live apart on one screen: the **asthma 
 - **Your personal outlook**: a small model that learns, **on your device**, which conditions tend to come before *your* rough days, and explains every prediction
 - **Which zone you're in today**: a 20-second check-in (peak flow and/or symptoms) that sorts you into your plan's zone, shows that zone's steps, and puts a **Call 911** button in front of you on danger signs
 
-English and Spanish. Works on phones. No account, no server, no tracking: everything stays in your browser.
+It's in English and Spanish and works on phones. There's no account or server and nothing is tracked; everything stays in your browser.
 
 Built for **DSH Hacks V2** (theme: AI × Healthcare).
 
-> ⚠️ **Not medical advice.** BreatheEasy helps you follow the plan your doctor wrote. It does not diagnose, prescribe, or replace medical care. Trouble walking or talking from shortness of breath, or blue lips or fingernails: call 911.
+> **Not medical advice.** BreatheEasy helps you follow the plan your doctor wrote. It does not diagnose, prescribe, or replace medical care. Trouble walking or talking from shortness of breath, or blue lips or fingernails: call 911.
 
 ---
 
-## Judge it in 60 seconds
+## Quick check for judges
 
 1. Open **https://aariv.me/Breatheasy/** and search any city on the Air tab: tomorrow's AQI, the main pollutant and EPA's advice for it.
 2. Tap **See it work on SYNTHETIC demo data** (or open `?demo=1`) to see the personal outlook on clearly labelled SYNTHETIC data. Switch **EN / ES** at the top.
 3. Run the tests (Node 18+, no install):
    ```bash
    git clone https://github.com/draarivpatel-ui/Breatheasy && cd Breatheasy
-   npm test        # node --test; ends with "# pass 109" and "# fail 0"
+   npm test        # node --test; ends with "# pass 122" and "# fail 0"
    ```
    Optional: `python3 tests/e2e.py` (Playwright) runs 142 headless-Chromium checks against saved real API responses.
 
@@ -54,14 +54,14 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 4. **Guidance** (`js/guidance.js`) picks lines from EPA's AQI guidance and NHLBI's trigger tips, plus the text **you** copied from your doctor's plan. The app never generates medication names, doses or treatment steps.
 5. **Pollen** – Open-Meteo's pollen forecast covers Europe only, so for U.S. locations the app says so plainly and lets you log the [Houston Health Department daily count](https://www.houstonhealth.org/services/pollen-mold) when you check in. Where grain counts exist they're bucketed with the National Allergy Bureau ranges (tree 15/90/1500, grass 5/20/200, weed 10/50/500 grains/m³; [table](https://forsyth.cc/eap/air_quality/pollen.aspx)).
 
-## How the AI works (and what it doesn't do)
+## How the model works, and what it doesn't do
 
 `js/model.js` is an **L2-regularised logistic regression** trained **in the browser** by gradient descent on your own check-ins. Nothing leaves the device.
 
 - **Label:** a day is "rough" if your check-in put you in the yellow or red zone.
 - **Features:** that day's ozone AQI, PM2.5 AQI, pollen level, high temperature, humidity, and whether the day before was rough. Features are standardised; missing values are imputed at the mean, so they contribute exactly zero.
 - **Explainable:** every prediction is broken into per-feature contributions (weight × standardised value) that add up exactly to the model's logit, so "Why tomorrow looks high" lists the real reasons. The Insights tab shows the learned weights as a bar chart plus an accessible table.
-- **Honest:** it refuses to predict until it has **14 days with at least 3 rough and 3 good days**. It reports accuracy on the **most recent 25 % of days it never trained on**, next to the "always guess the most common answer" baseline.
+- **Waits for enough data:** it refuses to predict until it has **14 days with at least 3 rough and 3 good days**. It reports accuracy on the **most recent 25 % of days it never trained on**, next to the "always guess the most common answer" baseline.
 - **Calibrated, and checked on SYNTHETIC data where the truth is known.** `js/validate.js` makes up 12 people (seeds 101–112), 200 days each, with the same hidden pattern, trains the model on their logged days and scores it **only on the 100 days that come after** (no peeking at the future). The Insights tab draws the results, tagged SYNTHETIC, with a data table behind each chart:
   - **Reliability plot (calibration)** after 60 logged days, 1,200 held-out days: when the model says 0–20 % / 20–40 % / 40–60 % / 60–80 % / 80–100 %, the share of days that were actually rough is 14 % / 25 % / 42 % / 73 % / 89 % (its average prediction in those bins: 15 / 31 / 50 / 70 / 88 %). Expected calibration error **3.8 percentage points**; it said 57 % on average and 55 % of days were rough. It runs slightly high in the middle bins.
   - **Brier score** (lower is better) on those held-out days: **0.172**, vs. **0.252** for guessing each person's usual rate every day and **0.157** for the best possible score (the generator's own hidden probabilities).
@@ -76,7 +76,7 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
     Best possible with the hidden pattern: 77 % / Brier 0.157. At 14 days, 1 of the 12 people had too few rough or good days, so the model waited (as it does in the app). Two weeks is a weak model; about three to four weeks is where it settles.
   - These numbers show the method works **when a pattern exists**. Real logs can be noisier, depend on triggers the app does not measure, or have no pattern at all. It is not a clinical validation.
 - **Explain any past day.** Pick any logged day (or tap *Explain* in Recent check-ins) to see the starting point (an average day in that log), each condition's push in log-odds with its odds multiplier (for example "Pollen level: High ▲ ×3.02 odds"), and the result. It also shows what a model trained **only on the days before** that one would have said, so you can see whether it would have seen the day coming. The text says it shows what the model weighed, not what caused the day.
-- **Demo data is synthetic and labelled.** *Load synthetic demo data* (or `?demo=1`) generates 75 made-up days from a seeded random process in `js/demo.js` in which the invented person reacts to ozone, pollen and heat but not humidity. A purple banner says SYNTHETIC whenever it's shown. On that data the model ranks pollen and ozone as the top two links and scores 84 % held-out accuracy vs. a 68 % baseline (19 held-out days; Brier 0.12). That shows the pipeline works; it says nothing about real patients.
+- **Demo data is synthetic and labelled.** *Load synthetic demo data* (or `?demo=1`) generates 75 made-up days from a seeded random process in `js/demo.js` in which the invented person reacts to ozone, pollen and heat but not humidity. A dashed banner says SYNTHETIC whenever it's shown. On that data the model ranks pollen and ozone as the top two links and scores 84 % held-out accuracy vs. a 68 % baseline (19 held-out days; Brier 0.12). That shows the pipeline works; it says nothing about real patients.
 - **Not a medical device.** It finds associations in one person's log; links are not proof of cause, and the risk bands (low < 35 % ≤ elevated < 60 % ≤ high) are a design choice, not clinical thresholds.
 
 ## Features
@@ -169,13 +169,15 @@ tests/              node unit tests, Playwright e2e, real API fixtures
 onepager.pdf        one-page project description (DSH Hacks submission)
 ```
 
-## Limits and honesty
+## Limits
 
 - Forecasts are model estimates (CAMS via Open-Meteo, ~11 km grid), not monitor readings. Official local forecasts and Ozone Action Days: [AirNow](https://www.airnow.gov/).
 - Ozone above 0.200 ppm (8-h) has no EPA 8-hour breakpoint (EPA uses 1-hour ozone for AQI 301+, which the app does not compute); the app caps at 300 (Very Unhealthy). PM2.5 above 325.4 µg/m³ follows EPA's rule and keeps rising past 500 instead of stopping there.
 - No U.S. pollen forecast from a free, keyless, CORS-enabled source; pollen is user-logged for U.S. locations.
 - The model is only as good as the check-ins; with sparse logs it stays silent. Its calibration and sensitivity numbers come from SYNTHETIC people with a planted pattern, not from patients.
 - Offline mode shows the last forecast saved on this device; it cannot get a new forecast without a connection.
+- If a data source is down, the app says so instead of guessing.
+- BreatheEasy is information, not clinical advice. Follow your own asthma action plan and clinician.
 
 ## AI-assistance disclosure
 
@@ -198,8 +200,3 @@ This project was built with help from an AI coding assistant (Hark), which draft
 - Open-Meteo, [Air Quality API](https://open-meteo.com/en/docs/air-quality-api) (data: Copernicus CAMS, CC BY 4.0) and [Weather API](https://open-meteo.com/en/docs)
 
 MIT License.
-
-## Known limits
-- Air and forecast data come from public sources (see Sources); if one is down the app says so rather than guessing.
-- The personal outlook uses SYNTHETIC demo data only, and is labelled as such.
-- BreatheEasy is information, not clinical advice. Follow your own asthma action plan and clinician.

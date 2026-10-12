@@ -6,7 +6,7 @@
   <title>BreatheEasy: asthma action plan × tomorrow's air</title>
   <meta name="description" content="A private, on-device asthma action plan that matches your doctor's plan to tomorrow's ozone, particle and pollen forecast, for Houston-area towns or any city you search.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="BreatheEasy: your asthma action plan, matched to tomorrow&#39;s air">
+  <meta property="og:title" content="BreatheEasy: tomorrow&#39;s air forecast next to your asthma action plan">
   <meta property="og:description" content="Matches the plan your doctor gave you to tomorrow&#39;s ozone, PM2.5 and pollen forecast. Private and on-device, English and Spanish, free.">
   <meta property="og:url" content="https://aariv.me/Breatheasy/">
   <meta property="og:image" content="https://aariv.me/Breatheasy/docs/hero.png">
@@ -25,7 +25,7 @@
   (function () { try { var st = JSON.parse(localStorage.getItem('breatheeasy.v1') || 'null');
     var l = st && (st.lang === 'en' || st.lang === 'es') ? st.lang : ((navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en');
     if (l === 'es') { document.documentElement.lang = 'es'; document.documentElement.classList.add('i18n-wait'); } } catch (e) {} })();</script>
-  <link rel="stylesheet" href="styles.css?v=be-44431fe726">
+  <link rel="stylesheet" href="styles.css?v=be-04e855a484">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -36,7 +36,7 @@
         <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14"/><path d="M14 38c8 0 10-8 18-8s10 8 18 8M14 26c8 0 10-8 18-8s10 8 18 8"/></svg>
         <div>
           <h1 class="name">BreatheEasy</h1>
-          <p class="tagline" data-i18n="tagline">Your asthma action plan, matched to tomorrow's air.</p>
+          <p class="tagline" data-i18n="tagline">Tomorrow's air forecast next to your asthma action plan.</p>
         </div>
       </div>
       <label class="lang"><span class="sr-only" data-i18n="lang_label">Language</span>
@@ -294,7 +294,7 @@
 
     <!-- ABOUT -->
     <section id="about" aria-labelledby="about-h">
-      <h2 id="about-h" data-i18n="about_h">Why BreatheEasy</h2>
+      <h2 id="about-h" data-i18n="about_h">Background</h2>
       <div class="card prose" data-only="en" lang="en">
         <p>About <strong>4.8 million U.S. children (6.7%)</strong> have asthma right now, and <strong>47%</strong> of them had at least one asthma attack in the past year (CDC, 2023 National Health Interview Survey). Doctors hand families a paper <strong>asthma action plan</strong> with green, yellow and red zones, but it rarely gets connected to tomorrow's air.</p>
         <p>That matters in Houston. The American Lung Association's <em>State of the Air 2026</em> ranks the Houston-Pasadena metro <strong>6th worst in the nation for ozone</strong>, with Harris County averaging <strong>43.3 weighted unhealthy ozone days a year</strong> (2022–2024 data). EPA lists people with asthma and children and teenagers among the groups most sensitive to ozone.</p>
@@ -344,7 +344,7 @@
 
       <div class="card">
         <h3 data-i18n="data_h">Your data</h3>
-        <p data-i18n="data_note">Everything stays in this browser (localStorage). No account, no server, no tracking.</p>
+        <p data-i18n="data_note">Everything stays in this browser (localStorage). There is no account or server, and nothing is tracked.</p>
         <div class="actions">
           <button type="button" class="btn ghost" id="export" data-i18n="export">Export my data (JSON)</button>
           <button type="button" class="btn danger" id="wipe" data-i18n="wipe">Delete all my data</button>
@@ -356,19 +356,19 @@
 
   <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-44431fe726"></script>
-  <script src="js/zones.js?v=be-44431fe726"></script>
-  <script src="js/forecast.js?v=be-44431fe726"></script>
-  <script src="js/fccache.js?v=be-44431fe726"></script>
-  <script src="js/model.js?v=be-44431fe726"></script>
-  <script src="js/guidance.js?v=be-44431fe726"></script>
-  <script src="js/demo.js?v=be-44431fe726"></script>
-  <script src="js/validate.js?v=be-44431fe726"></script>
-  <script src="js/ics.js?v=be-44431fe726"></script>
-  <script src="js/share.js?v=be-44431fe726"></script>
-  <script src="js/places.js?v=be-44431fe726"></script>
-  <script src="js/i18n.js?v=be-44431fe726"></script>
-  <script src="js/store.js?v=be-44431fe726"></script>
-  <script src="js/app.js?v=be-44431fe726"></script>
+  <script src="js/aqi.js?v=be-04e855a484"></script>
+  <script src="js/zones.js?v=be-04e855a484"></script>
+  <script src="js/forecast.js?v=be-04e855a484"></script>
+  <script src="js/fccache.js?v=be-04e855a484"></script>
+  <script src="js/model.js?v=be-04e855a484"></script>
+  <script src="js/guidance.js?v=be-04e855a484"></script>
+  <script src="js/demo.js?v=be-04e855a484"></script>
+  <script src="js/validate.js?v=be-04e855a484"></script>
+  <script src="js/ics.js?v=be-04e855a484"></script>
+  <script src="js/share.js?v=be-04e855a484"></script>
+  <script src="js/places.js?v=be-04e855a484"></script>
+  <script src="js/i18n.js?v=be-04e855a484"></script>
+  <script src="js/store.js?v=be-04e855a484"></script>
+  <script src="js/app.js?v=be-04e855a484"></script>
 </body>
 </html>

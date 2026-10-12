@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   var en = {
-    tagline: 'Your asthma action plan, matched to tomorrow\u2019s air.',
+    tagline: 'Tomorrow\u2019s air forecast next to your asthma action plan.',
     skip: 'Skip to main content',
     lang_label: 'Language',
     safety: 'BreatheEasy helps you follow the plan your doctor gave you. It does not diagnose, prescribe, or replace medical care.',
@@ -23,7 +23,7 @@
     plan_card_h: 'What to do tomorrow',
     your_outlook: 'Your personal outlook',
     risk_low: 'Low', risk_elevated: 'Elevated', risk_high: 'High',
-    risk_none: 'Log at least {days} days (with some good and some rough days) to unlock your personal outlook.',
+    risk_none: 'Log at least {days} days (with some good and some rough days) to see your personal outlook.',
     add_cal: 'Add to calendar', print: 'Print plan',
     share: 'Share with coach or nurse', share_label: 'Message to send (you can edit it)', share_copy: 'Copy message',
     share_head: 'BreatheEasy note for {date} ({place})', share_air: 'Air forecast: {aqiLabel} {aqi}, {cat}. Main pollutant: {pol}.',
@@ -104,7 +104,7 @@
     model_status_need: 'Logged {n} days so far. Need {d} more days, {r} more rough days, and {g} more good days.',
     weights_h: 'Which conditions go with your rough days', weights_note: 'Bars to the right are linked with rougher days; bars to the left with easier days. Longer = stronger link in your data. Links are not proof of cause.',
     f_ozone: 'Ozone AQI', f_pm25: 'PM2.5 AQI', f_pollen: 'Pollen level', f_heat: 'High temperature', f_humidity: 'Humidity', f_yesterday: 'Rough day yesterday',
-    eval_line: 'Honest check on the latest {n} days it didn\u2019t train on: right {acc}% of the time (always guessing the most common answer: {base}%). Brier score {brier} (lower is better).',
+    eval_line: 'Tested on the latest {n} days it didn\u2019t train on: right {acc}% of the time (always guessing the most common answer: {base}%). Brier score {brier} (lower is better).',
     eval_none: 'Not enough history yet for a held-out accuracy check.',
     why_h: 'Why tomorrow looks {band}',
     history_h: 'Recent check-ins', history_none: 'No check-ins yet.',
@@ -150,15 +150,15 @@
     legend_best: 'Best possible',
     weight_col: 'Weight', feature_col: 'Condition', direction_col: 'Direction', dir_up: 'rougher', dir_down: 'easier',
     // About / data
-    about_h: 'Why BreatheEasy',
-    data_h: 'Your data', data_note: 'Everything stays in this browser (localStorage). No account, no server, no tracking.',
+    about_h: 'Background',
+    data_h: 'Your data', data_note: 'Everything stays in this browser (localStorage). There is no account or server, and nothing is tracked.',
     export: 'Export my data (JSON)', wipe: 'Delete all my data', wipe_confirm: 'Delete your plan and all check-ins from this device?', wiped: 'All data deleted.',
     sources_h: 'Sources', limits_h: 'Limits',
     footer: 'Built for DSH Hacks V2 (AI \u00d7 Healthcare). Not medical advice.'
   };
 
   var es = {
-    tagline: 'Tu plan de acci\u00f3n para el asma, ajustado al aire de ma\u00f1ana.',
+    tagline: 'El pron\u00f3stico del aire de ma\u00f1ana junto a tu plan de acci\u00f3n para el asma.',
     skip: 'Saltar al contenido principal',
     lang_label: 'Idioma',
     safety: 'BreatheEasy te ayuda a seguir el plan que te dio tu m\u00e9dico. No diagnostica, no receta y no reemplaza la atenci\u00f3n m\u00e9dica.',
@@ -178,7 +178,7 @@
     plan_card_h: 'Qu\u00e9 hacer ma\u00f1ana',
     your_outlook: 'Tu pron\u00f3stico personal',
     risk_low: 'Bajo', risk_elevated: 'Elevado', risk_high: 'Alto',
-    risk_none: 'Registra al menos {days} d\u00edas (con algunos d\u00edas buenos y algunos dif\u00edciles) para activar tu pron\u00f3stico personal.',
+    risk_none: 'Registra al menos {days} d\u00edas (con algunos d\u00edas buenos y algunos dif\u00edciles) para ver tu pron\u00f3stico personal.',
     add_cal: 'Agregar al calendario', print: 'Imprimir plan',
     share: 'Compartir con el entrenador o la enfermera escolar', share_label: 'Mensaje para enviar (puedes editarlo)', share_copy: 'Copiar mensaje',
     share_head: 'Nota de BreatheEasy para {date} ({place})', share_air: 'Pron\u00f3stico del aire: {aqiLabel} {aqi}, {cat}. Contaminante principal: {pol}.',
@@ -255,7 +255,7 @@
     model_status_need: 'Llevas {n} d\u00edas registrados. Faltan {d} d\u00edas m\u00e1s, {r} d\u00edas dif\u00edciles m\u00e1s y {g} d\u00edas buenos m\u00e1s.',
     weights_h: 'Qu\u00e9 condiciones acompa\u00f1an tus d\u00edas dif\u00edciles', weights_note: 'Las barras hacia la derecha se relacionan con d\u00edas m\u00e1s dif\u00edciles; hacia la izquierda, con d\u00edas m\u00e1s f\u00e1ciles. M\u00e1s larga = relaci\u00f3n m\u00e1s fuerte en tus datos. Una relaci\u00f3n no prueba la causa.',
     f_ozone: 'ICA de ozono', f_pm25: 'ICA de PM2.5', f_pollen: 'Nivel de polen', f_heat: 'Temperatura m\u00e1xima', f_humidity: 'Humedad', f_yesterday: 'D\u00eda dif\u00edcil ayer',
-    eval_line: 'Prueba honesta con los \u00faltimos {n} d\u00edas que no us\u00f3 para entrenar: acert\u00f3 el {acc}% de las veces (adivinar siempre la respuesta m\u00e1s com\u00fan: {base}%). Puntaje Brier {brier} (menor es mejor).',
+    eval_line: 'Probado con los \u00faltimos {n} d\u00edas que no us\u00f3 para entrenar: acert\u00f3 el {acc}% de las veces (adivinar siempre la respuesta m\u00e1s com\u00fan: {base}%). Puntaje Brier {brier} (menor es mejor).',
     eval_none: 'Todav\u00eda no hay suficiente historial para una prueba de precisi\u00f3n.',
     why_h: 'Por qu\u00e9 ma\u00f1ana se ve {band}',
     history_h: 'Registros recientes', history_none: 'A\u00fan no hay registros.',
@@ -300,8 +300,8 @@
     legend_base: 'Adivinar lo m\u00e1s com\u00fan',
     legend_best: 'Lo mejor posible',
     weight_col: 'Peso', feature_col: 'Condici\u00f3n', direction_col: 'Direcci\u00f3n', dir_up: 'm\u00e1s dif\u00edcil', dir_down: 'm\u00e1s f\u00e1cil',
-    about_h: 'Por qu\u00e9 BreatheEasy',
-    data_h: 'Tus datos', data_note: 'Todo se queda en este navegador (localStorage). Sin cuenta, sin servidor, sin rastreo.',
+    about_h: 'Contexto',
+    data_h: 'Tus datos', data_note: 'Todo se queda en este navegador (localStorage). No hay cuenta ni servidor, y no se rastrea nada.',
     export: 'Exportar mis datos (JSON)', wipe: 'Borrar todos mis datos', wipe_confirm: '\u00bfBorrar tu plan y todos tus registros de este dispositivo?', wiped: 'Se borraron todos los datos.',
     sources_h: 'Fuentes', limits_h: 'L\u00edmites',
     footer: 'Hecho para DSH Hacks V2 (IA \u00d7 Salud). No es consejo m\u00e9dico.'
