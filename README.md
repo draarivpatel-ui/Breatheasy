@@ -195,7 +195,7 @@ This project was built with help from an AI coding assistant (Hark), which draft
 - NHLBI, [Asthma Action Plan](https://www.nhlbi.nih.gov/resources/asthma-action-plan-2020) (Dec 2020, NIH Pub. No. 20-HL-5251)
 - CDC, [Most Recent National Asthma Data](https://www.cdc.gov/asthma/most_recent_national_asthma_data.htm) (2023 NHIS; page updated Oct 6 2026)
 - American Lung Association, [State of the Air 2026 – Texas](https://www.lung.org/media/press-releases/fy26-sota-texas)
-- U.S. EPA, [40 CFR Part 58 App. G](https://www.ecfr.gov/current/title-40/chapter-I/subchapter-C/part-58/appendix-Appendix%20G%20to%20Part%2058), [AQI Basics](https://www.airnow.gov/aqi/aqi-basics/), [Air Quality Guide for Ozone](https://document.airnow.gov/air-quality-guide-for-ozone.pdf), [2024 PM AQI fact sheet](https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf)
+- U.S. EPA, [40 CFR Part 58 App. G](https://www.ecfr.gov/current/title-40/chapter-I/subchapter-C/part-58/appendix-Appendix%20G%20to%20Part%2058) (Table 2 breakpoints as revised by 89 FR 16403, Mar 6 2024, in force May 6 2024; eCFR text current as of Oct 8 2026, re-read Oct 12 2026: PM2.5 and 8-hour ozone rows match `js/aqi.js` exactly), [AQI Basics](https://www.airnow.gov/aqi/aqi-basics/), [Air Quality Guide for Ozone](https://document.airnow.gov/air-quality-guide-for-ozone.pdf), [2024 PM AQI fact sheet](https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf)
 - Houston Health Department, [Pollen and Mold Reports](https://www.houstonhealth.org/services/pollen-mold)
 - Open-Meteo, [Air Quality API](https://open-meteo.com/en/docs/air-quality-api) (data: Copernicus CAMS, CC BY 4.0) and [Weather API](https://open-meteo.com/en/docs)
 
