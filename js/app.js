@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var AQI = window.BE_AQI, Z = window.BE_Zones, F = window.BE_Forecast, M = window.BE_Model,
-    G = window.BE_Guidance, P = window.BE_Places, FC = window.BE_FcCache, DEMO = window.BE_Demo, V = window.BE_Validate, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share;
+    G = window.BE_Guidance, P = window.BE_Places, FC = window.BE_FcCache, DEMO = window.BE_Demo, V = window.BE_Validate, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share, ST = window.BE_Store;
 
   var KEY = 'breatheeasy.v1', DEMO_KEY = 'breatheeasy.demo.v1', FC_KEY = 'breatheeasy.forecast.v1';
   var PLACES = {
@@ -25,9 +25,9 @@
   function isoLocal(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function addDays(iso, n) { return DEMO.addDays(iso, n); }
 
-  var state = load(KEY, null) || { lang: (navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en', place: 'sugarland', custom: null, plan: { triggers: [] }, entries: [] };
-  state.entries = state.entries || []; state.plan = state.plan || { triggers: [] };
-  var demo = load(DEMO_KEY, null); // array of synthetic entries or null
+  // Saved data from an older version (or edited by hand) is cleaned up, never trusted as-is: see js/store.js.
+  var state = ST.sanitize(load(KEY, null), navigator.language, Object.keys(PLACES));
+  var demo = ST.demo(load(DEMO_KEY, null)); // array of synthetic entries or null
   // One-line notes that must follow a language switch: form errors (i18n keys), 'Plan saved', 'All data deleted'.
   var formErr = { ci: null, plan: null }, planSaved = false, wiped = false, lastResult = null;
   // Forecast for the current place, from Open-Meteo or the per-place cache (js/fccache.js).
@@ -43,7 +43,7 @@
 
   // Allow a fixed "today" for demos/tests: ?today=YYYY-MM-DD
   var qs = new URLSearchParams(location.search);
-  var TODAY = /^\d{4}-\d{2}-\d{2}$/.test(qs.get('today') || '') ? qs.get('today') : isoLocal(new Date());
+  var TODAY = ST.validDay(qs.get('today')) ? qs.get('today') : isoLocal(new Date());
   var TOMORROW = addDays(TODAY, 1);
 
   function t(k, p) { return I.t(state.lang, k, p); }

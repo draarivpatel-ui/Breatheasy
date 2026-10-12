@@ -124,14 +124,15 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 11, 2026: **109/109 unit tests, 142/142 end-to-end checks and 42/42 print checks passing**. GitHub Actions (`.github/workflows/tests.yml`) runs all three on every push to `main`.
+Last run Oct 11, 2026: **116/116 unit tests, 142/142 end-to-end checks, 42/42 print checks and 48/48 saved-data checks passing**. GitHub Actions (`.github/workflows/tests.yml`) runs every suite below on every push to `main`.
 
 ```bash
-node --test tests/*.test.js                          # 109 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics (UTF-8 byte folding at 75 octets, EN/ES), share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish), EN/ES "Why BreatheEasy" parity (same model inputs as js/model.js, same numbers and links), and every number quoted on the submitted Devpost page re-computed from the code (tests/devpost-claims.test.js)
+node --test tests/*.test.js                          # 116 unit tests: AQI math, zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics (UTF-8 byte folding at 75 octets, EN/ES), share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish), EN/ES "Why BreatheEasy" parity (same model inputs as js/model.js, same numbers and links), and every number quoted on the submitted Devpost page re-computed from the code (tests/devpost-claims.test.js), and a table of saved data from an older or hand-edited copy (js/store.js: a string, a list, an unknown language or place, bad diary rows dropped one by one, impossible ?today= dates)
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 142 headless-Chromium checks (pip install playwright)
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/axe_states.py # 220 checks: axe-core 0 violations in 11 states (first load, demo, check-in errors/saved, plan errors/saved, city results/not found/search down, forecast 429, offline) x 390/1280 px x EN/ES, again after switching language mid-flow
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/lang_flash.py # 14 checks: a Spanish user (saved choice or browser language) never sees the English page flash before js/app.js runs; 3 s fail-safe; corrupt saved data can't hide the page
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/edge.py # 60 checks at 390 px, EN/ES: peak flow 49/901/410.5/-5/1e3/0 and personal best 0/49/901/99999 refused with a message (box marked, nothing saved), 50/900/blank accepted; tomorrow's check-in refused; the error, "Plan saved", the check-in result and "All data deleted" all re-worded when you switch language
+CHROMIUM_PATH=/usr/bin/chromium python3 tests/saved_state.py # 48 checks at 390 px: 14 broken saved copies (not JSON, a string, lang 'fr', unknown place, diary as an object, bad rows + 1 good ...), a broken demo diary and 4 impossible ?today= dates -> no script error, forecast card renders, good rows kept, the next check-in saves into a clean copy
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/print_test.py # 42 checks: Print plan on ONE Letter page in English and Spanish (plain, SYNTHETIC demo, long personal plan + every trigger), with the place, AQI, 911 line, SYNTHETIC label and the user's own words, and no on-screen controls (needs pdfinfo/pdftotext)
 node scripts/stamp.js                                # after any change to app files: refresh the cache-busting hash
 LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the real Open-Meteo APIs once
@@ -149,6 +150,7 @@ js/aqi.js           EPA AQI breakpoints + math
 js/forecast.js      Open-Meteo fetch + daily EPA-method summaries
 js/fccache.js       per-place forecast cache: 30 min fresh, 3 h fallback on 429/outage, "as of" age
 js/zones.js         NHLBI action-plan zones
+js/store.js         saved-data guard: an older or hand-edited copy is cleaned up on load, never trusted as-is
 js/guidance.js      which cited guidance lines apply
 js/model.js         on-device logistic regression + explanations + evaluation
 js/demo.js          seeded SYNTHETIC demo generator

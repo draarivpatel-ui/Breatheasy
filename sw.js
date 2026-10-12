@@ -8,11 +8,11 @@
  *  - Other origins (the Open-Meteo forecast APIs): never cached here. js/fccache.js keeps the last good
  *    forecast per place in localStorage (30 min fresh, 3 h fallback) and labels its age honestly.
  */
-var VERSION = 'be-f6f9115e47';
+var VERSION = 'be-f59caf0c6d';
 var CACHE = 'breatheeasy-' + VERSION;
 var ASSETS = [
   'styles.css', 'js/aqi.js', 'js/zones.js', 'js/forecast.js', 'js/fccache.js', 'js/model.js', 'js/guidance.js', 'js/demo.js',
-  'js/validate.js', 'js/ics.js', 'js/share.js', 'js/places.js', 'js/i18n.js', 'js/app.js'
+  'js/validate.js', 'js/ics.js', 'js/share.js', 'js/places.js', 'js/i18n.js', 'js/store.js', 'js/app.js'
 ];
 var SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
   'icons/maskable-512.png', 'icons/apple-touch-icon.png'].concat(ASSETS.map(function (a) { return a + '?v=' + VERSION; }));
