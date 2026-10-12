@@ -16,3 +16,4 @@ jobs:
       - run: python tests/print_test.py   # Print plan: one Letter page EN/ES (plain, SYNTHETIC demo, long personal plan)
       - run: python tests/axe_states.py   # axe-core: 11 states x 390/1280 x EN/ES, plus a language switch mid-flow
       - run: python tests/lang_flash.py   # Spanish users never see the English page flash; 3 s fail-safe
+      - run: python tests/edge.py         # impossible peak flow / personal best / future dates refused; messages follow a language switch

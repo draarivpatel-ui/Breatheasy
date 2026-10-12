@@ -269,3 +269,7 @@ legend { font-weight: 700; padding: 0 6px; display: flex; align-items: center; g
 /* Spanish users: hidden until js/app.js has applied the Spanish strings (no flash of English); always shown after 3 s. */
 html.i18n-wait body { visibility: hidden; animation: i18n-reveal 0s linear 3s forwards; }
 @keyframes i18n-reveal { to { visibility: visible; } }
+
+/* Form errors (check-in, plan): red text, AA on white; empty ones take no space. */
+.form-err { color: var(--red); font-weight: 600; margin: 6px 0; }
+.form-err:empty { display: none; }

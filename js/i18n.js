@@ -90,6 +90,8 @@
     before_ex: 'Before exercise', doctor_phone: 'Doctor\u2019s phone',
     triggers_h: 'My known triggers', t_ozone: 'Ozone (smog)', t_smoke: 'Smoke / particle pollution', t_pollen: 'Pollen', t_heat: 'Heat', t_mold: 'Mold', t_cold: 'Cold air',
     save_plan: 'Save plan', plan_saved: 'Plan saved on this device.',
+    err_pf: 'Peak flow should be a whole number from 50 to 900 L/min, or leave it blank.', err_date_future: 'Pick today or an earlier day. You can\u2019t check in for a day that hasn\u2019t happened yet.',
+    err_best: 'Personal best should be a whole number from 50 to 900 L/min, or leave it blank.',
     // Insights
     insights_h: 'What your log is learning', insights_intro: 'A small model trains right here in your browser on your own check-ins. Nothing is uploaded.',
     demo_load: 'Load synthetic demo data', demo_clear: 'Remove demo data',
@@ -240,6 +242,8 @@
     before_ex: 'Antes del ejercicio', doctor_phone: 'Tel\u00e9fono del m\u00e9dico',
     triggers_h: 'Mis desencadenantes', t_ozone: 'Ozono (smog)', t_smoke: 'Humo / part\u00edculas', t_pollen: 'Polen', t_heat: 'Calor', t_mold: 'Moho', t_cold: 'Aire fr\u00edo',
     save_plan: 'Guardar plan', plan_saved: 'Plan guardado en este dispositivo.',
+    err_pf: 'El flujo m\u00e1ximo debe ser un n\u00famero entero de 50 a 900 L/min, o d\u00e9jalo en blanco.', err_date_future: 'Elige hoy o un d\u00eda anterior. No puedes registrar un d\u00eda que todav\u00eda no ha pasado.',
+    err_best: 'Tu mejor puntuaci\u00f3n personal debe ser un n\u00famero entero de 50 a 900 L/min, o d\u00e9jala en blanco.',
     insights_h: 'Lo que aprende tu registro', insights_intro: 'Un modelo peque\u00f1o se entrena aqu\u00ed mismo, en tu navegador, con tus propios registros. No se sube nada.',
     demo_load: 'Cargar datos de demostraci\u00f3n sint\u00e9ticos', demo_clear: 'Quitar datos de demostraci\u00f3n',
     place_label: 'O busca cualquier ciudad', place_btn: 'Buscar', place_ph: 'p. ej., Phoenix, Delhi, Londres',

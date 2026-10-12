@@ -28,6 +28,8 @@
   var state = load(KEY, null) || { lang: (navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en', place: 'sugarland', custom: null, plan: { triggers: [] }, entries: [] };
   state.entries = state.entries || []; state.plan = state.plan || { triggers: [] };
   var demo = load(DEMO_KEY, null); // array of synthetic entries or null
+  // One-line notes that must follow a language switch: form errors (i18n keys), 'Plan saved', 'All data deleted'.
+  var formErr = { ci: null, plan: null }, planSaved = false, wiped = false, lastResult = null;
   // Forecast for the current place, from Open-Meteo or the per-place cache (js/fccache.js).
   // The old single-slot cache (FC_KEY) could show another city's forecast, so it is dropped.
   try { localStorage.removeItem(FC_KEY); } catch (e) { /* ignore */ }
@@ -62,6 +64,12 @@
     $$('[data-only]').forEach(function (n) { n.hidden = n.getAttribute('data-only') !== state.lang; });
     $('#place-q').placeholder = t('place_ph');
     if (placeMsg) $('#place-msg').textContent = placeMsg.reason ? placeErrorText() : t(placeMsg.key, placeMsg.params);
+    // Form errors and the "Plan saved" note follow the language too.
+    $('#ci-err').textContent = formErr.ci ? t(formErr.ci) : '';
+    $('#plan-err').textContent = formErr.plan ? t(formErr.plan) : '';
+    $('#plan-msg').textContent = planSaved ? t('plan_saved') : '';
+    if (wiped) $('#data-msg').textContent = t('wiped');
+    if (lastResult && !$('#ci-result').hidden) showResult(lastResult); // the check-in result box, re-worded
     var so = $('#loc-search-opt');
     so.hidden = !state.searched; so.textContent = state.searched ? state.searched.name : '';
   }
@@ -293,8 +301,25 @@
     $('#ci-pf-hint').textContent = state.plan.personalBest ? t('peak_flow_hint', { best: state.plan.personalBest }) : t('peak_flow_hint_nobest');
   }
 
+  /* ---------- form checks (the forms are novalidate, so min/max/step on the inputs are only hints) ---------- */
+  // A blank box is fine (null); otherwise a whole number of L/min inside the box's own min..max (50..900).
+  function litersOk(input) {
+    if (input.validity && input.validity.badInput) return false;
+    var v = input.value.trim(); if (v === '') return true;
+    var n = Number(v);
+    return isFinite(n) && Math.floor(n) === n && n >= Number(input.min) && n <= Number(input.max);
+  }
+  function setFormErr(which, key, input) {
+    formErr[which] = key;
+    $(which === 'ci' ? '#ci-err' : '#plan-err').textContent = key ? t(key) : '';
+    var ids = which === 'ci' ? ['#ci-pf', '#ci-date'] : ['#p-best'];
+    ids.forEach(function (id) { $(id).removeAttribute('aria-invalid'); });
+    if (input) { input.setAttribute('aria-invalid', 'true'); input.focus(); }
+  }
+
   /* ---------- check-in ---------- */
   function showResult(entry) {
+    lastResult = entry;
     var box = $('#ci-result'); box.hidden = false; box.innerHTML = '';
     box.className = 'result zone-' + entry.zone;
     if (entry.danger) {
@@ -318,6 +343,9 @@
 
   function onCheckin(ev) {
     ev.preventDefault();
+    if (($('#ci-date').validity && $('#ci-date').validity.badInput) || ($('#ci-date').value && $('#ci-date').value > TODAY)) return setFormErr('ci', 'err_date_future', $('#ci-date'));
+    if (!litersOk($('#ci-pf'))) return setFormErr('ci', 'err_pf', $('#ci-pf'));
+    setFormErr('ci', null);
     var date = $('#ci-date').value || TODAY;
     var pf = $('#ci-pf').value ? Number($('#ci-pf').value) : null;
     var symptoms = $$('input[name="sym"]:checked').map(function (c) { return c.value; });
@@ -637,6 +665,9 @@
     $('#p-best').addEventListener('input', renderThresholds);
     $('#plan-form').addEventListener('submit', function (ev) {
       ev.preventDefault();
+      planSaved = false; $('#plan-msg').textContent = '';
+      if (!litersOk($('#p-best'))) return setFormErr('plan', 'err_best', $('#p-best'));
+      setFormErr('plan', null);
       var best = Number($('#p-best').value);
       state.plan = {
         personalBest: best > 0 ? best : null,
@@ -644,7 +675,7 @@
         beforeExercise: $('#p-ex').value.trim(), doctorPhone: $('#p-phone').value.trim(),
         triggers: $$('input[name="trig"]:checked').map(function (c) { return c.value; })
       };
-      persist(); $('#plan-msg').textContent = t('plan_saved'); renderAll();
+      persist(); planSaved = true; $('#plan-msg').textContent = t('plan_saved'); renderAll();
     });
     $('#ci-form').addEventListener('submit', onCheckin);
     $('#demo-toggle').addEventListener('click', function () {
@@ -670,7 +701,7 @@
       if (!window.confirm(t('wipe_confirm'))) return;
       [KEY, DEMO_KEY, FC_KEY].forEach(function (k) { localStorage.removeItem(k); }); FC.clear(localStorage);
       state = { lang: state.lang, place: 'sugarland', custom: null, searched: null, plan: { triggers: [] }, entries: [] }; demo = null;
-      persist(); renderPlanForm(); $('#ci-result').hidden = true; $('#data-msg').textContent = t('wiped'); renderAll(); fetchForecast();
+      persist(); renderPlanForm(); $('#ci-result').hidden = true; formErr = { ci: null, plan: null }; planSaved = false; wiped = true; $('#data-msg').textContent = t('wiped'); renderAll(); fetchForecast();
     });
     if (qs.get('demo') === '1' && !demo) { demo = DEMO.generate(TODAY, 75, 400, 42); save(DEMO_KEY, demo); }
     renderAll();

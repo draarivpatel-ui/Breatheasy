@@ -16,7 +16,7 @@
   (function () { try { var st = JSON.parse(localStorage.getItem('breatheeasy.v1') || 'null');
     var l = st && st.lang ? st.lang : ((navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en');
     if (l === 'es') { document.documentElement.lang = 'es'; document.documentElement.classList.add('i18n-wait'); } } catch (e) {} })();</script>
-  <link rel="stylesheet" href="styles.css?v=be-492b67104a">
+  <link rel="stylesheet" href="styles.css?v=be-f6f9115e47">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -167,6 +167,7 @@
             <label><input type="checkbox" id="ci-reliever"> <span data-i18n="reliever">I used quick-relief medicine today</span></label>
           </div>
         </div>
+        <p id="ci-err" class="form-err" role="alert"></p>
         <button type="submit" class="btn" data-i18n="save_checkin">Save check-in</button>
       </form>
       <div id="ci-result" class="result" role="status" aria-live="polite" hidden></div>
@@ -207,6 +208,7 @@
           <legend data-i18n="triggers_h">My known triggers</legend>
           <div class="checks" id="p-triggers"></div>
         </fieldset>
+        <p id="plan-err" class="form-err" role="alert"></p>
         <button type="submit" class="btn" data-i18n="save_plan">Save plan</button>
         <p id="plan-msg" class="status" role="status" aria-live="polite"></p>
       </form>
@@ -345,18 +347,18 @@
 
   <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-492b67104a"></script>
-  <script src="js/zones.js?v=be-492b67104a"></script>
-  <script src="js/forecast.js?v=be-492b67104a"></script>
-  <script src="js/fccache.js?v=be-492b67104a"></script>
-  <script src="js/model.js?v=be-492b67104a"></script>
-  <script src="js/guidance.js?v=be-492b67104a"></script>
-  <script src="js/demo.js?v=be-492b67104a"></script>
-  <script src="js/validate.js?v=be-492b67104a"></script>
-  <script src="js/ics.js?v=be-492b67104a"></script>
-  <script src="js/share.js?v=be-492b67104a"></script>
-  <script src="js/places.js?v=be-492b67104a"></script>
-  <script src="js/i18n.js?v=be-492b67104a"></script>
-  <script src="js/app.js?v=be-492b67104a"></script>
+  <script src="js/aqi.js?v=be-f6f9115e47"></script>
+  <script src="js/zones.js?v=be-f6f9115e47"></script>
+  <script src="js/forecast.js?v=be-f6f9115e47"></script>
+  <script src="js/fccache.js?v=be-f6f9115e47"></script>
+  <script src="js/model.js?v=be-f6f9115e47"></script>
+  <script src="js/guidance.js?v=be-f6f9115e47"></script>
+  <script src="js/demo.js?v=be-f6f9115e47"></script>
+  <script src="js/validate.js?v=be-f6f9115e47"></script>
+  <script src="js/ics.js?v=be-f6f9115e47"></script>
+  <script src="js/share.js?v=be-f6f9115e47"></script>
+  <script src="js/places.js?v=be-f6f9115e47"></script>
+  <script src="js/i18n.js?v=be-f6f9115e47"></script>
+  <script src="js/app.js?v=be-f6f9115e47"></script>
 </body>
 </html>
