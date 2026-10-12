@@ -82,6 +82,7 @@ with sync_playwright() as p:
     check('morning-ozone tip shown', 'lowest in the morning' in items)
     check('no medication text before the user adds a plan', 'puff' not in items.lower())
     check('pollen fact says no forecast for this area', 'No pollen forecast' in pg.inner_text('#pc-facts'))
+    check("Devpost claim 'the app shows both' (EPA-method 140 and Open-Meteo's own peak hourly 143)", 'peak hourly US AQI: 143' in pg.inner_text('#fc-source') and pg.inner_text('#pc-aqi .aqi-num') == '140', pg.inner_text('#fc-source'))
     check('ozone shown as the truncated 82 ppb the AQI was computed from (not a rounded 83)', 'AQI 140 (82 ppb, 8 h)' in pg.inner_text('#pc-facts') and '83 ppb' not in pg.inner_text('#pc-facts'), pg.inner_text('#pc-facts'))
     check('4-day strip', pg.locator('#strip li').count() == 4, pg.locator('#strip li').count())
     check('source line cites Open-Meteo + EPA', 'Open-Meteo' in pg.inner_text('#fc-source') and 'EPA' in pg.inner_text('#fc-source'))
