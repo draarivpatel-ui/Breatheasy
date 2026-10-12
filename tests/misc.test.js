@@ -52,6 +52,30 @@ test('.ics: valid all-day event, escaped, folded, CRLF', () => {
   assert.ok(s.includes('Line one\\nLine two\\, with comma\\; and'));
   s.split('\r\n').forEach(l => assert.ok(l.length <= 75, 'line too long: ' + l.length));
 });
+test('.ics fold: counts UTF-8 bytes (accents, emoji), never splits a character, rejoins to the original', () => {
+  const bytes = l => Buffer.byteLength(l, 'utf8');
+  const unfold = s => s.replace(/\r\n /g, '');
+  // Spanish text: every "ó/í/á/ñ" is 2 bytes, so 75 characters would be > 75 octets.
+  const es = 'DESCRIPTION:' + 'Mañana la contaminación por ozono será dañina para niños con asma; úsalo. '.repeat(4);
+  // Emoji (4 bytes) and a CJK char (3 bytes) at the fold edges.
+  const mixed = 'SUMMARY:' + 'a'.repeat(66) + '😷😷😷' + '漢'.repeat(30) + 'é'.repeat(50);
+  [es, mixed, 'X'.repeat(75), 'X'.repeat(76), 'é'.repeat(38)].forEach(line => {
+    const f = ICS.fold(line), parts = f.split('\r\n');
+    parts.forEach((p, i) => {
+      assert.ok(bytes(p) <= 75, 'folded line is ' + bytes(p) + ' octets');
+      if (i > 0) assert.equal(p[0], ' ', 'continuation must start with one space');
+      assert.ok(!/[\uD800-\uDBFF]$/.test(p) && !/^ ?[\uDC00-\uDFFF]/.test(p), 'split a surrogate pair');
+    });
+    assert.equal(unfold(f), line, 'unfolding gives the original line back');
+  });
+  assert.equal(ICS.fold('X'.repeat(75)).split('\r\n').length, 1, 'exactly 75 octets stays on one line');
+  assert.equal(ICS.fold('X'.repeat(76)).split('\r\n').length, 2);
+  assert.equal(ICS.fold('é'.repeat(38)).split('\r\n').length, 2, '38 x 2-byte = 76 octets must fold');
+  // Whole Spanish event: every physical line within 75 octets.
+  const s = ICS.allDayEvent('2026-10-12', 'BreatheEasy: ozono dañino para grupos sensibles (AQI 140)', es.slice(12), new Date('2026-10-11T12:00:00Z'));
+  s.split('\r\n').forEach(l => assert.ok(bytes(l) <= 75, 'event line is ' + bytes(l) + ' octets'));
+  assert.ok(unfold(s).includes('dañina para niños'));
+});
 test('.ics DTEND crosses month boundary', () => {
   assert.ok(ICS.allDayEvent('2026-10-31', 'a', 'b').includes('DTEND;VALUE=DATE:20261101'));
 });
