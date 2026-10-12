@@ -4,7 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BreatheEasy: asthma action plan × tomorrow's air</title>
-  <meta name="description" content="A private, on-device asthma action plan that matches your doctor's plan to Houston's ozone, particle and pollen forecast.">
+  <meta name="description" content="A private, on-device asthma action plan that matches your doctor's plan to tomorrow's ozone, particle and pollen forecast, for Houston-area towns or any city you search.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BreatheEasy: your asthma action plan, matched to tomorrow&#39;s air">
+  <meta property="og:description" content="Matches the plan your doctor gave you to tomorrow&#39;s ozone, PM2.5 and pollen forecast. Private and on-device, English and Spanish, free.">
+  <meta property="og:url" content="https://aariv.me/Breatheasy/">
+  <meta property="og:image" content="https://aariv.me/Breatheasy/docs/hero.png">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="800">
+  <meta property="og:image:alt" content="BreatheEasy air outlook: tomorrow&#39;s AQI, main pollutant, ozone, PM2.5 and what to do">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#0f4c5c">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f4c5c'/%3E%3Cpath d='M14 38c8 0 10-8 18-8s10 8 18 8M14 26c8 0 10-8 18-8s10 8 18 8' stroke='%23fff' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="manifest" href="manifest.webmanifest">
@@ -16,7 +25,7 @@
   (function () { try { var st = JSON.parse(localStorage.getItem('breatheeasy.v1') || 'null');
     var l = st && (st.lang === 'en' || st.lang === 'es') ? st.lang : ((navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en');
     if (l === 'es') { document.documentElement.lang = 'es'; document.documentElement.classList.add('i18n-wait'); } } catch (e) {} })();</script>
-  <link rel="stylesheet" href="styles.css?v=be-f59caf0c6d">
+  <link rel="stylesheet" href="styles.css?v=be-8aef26b40e">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -347,19 +356,19 @@
 
   <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-f59caf0c6d"></script>
-  <script src="js/zones.js?v=be-f59caf0c6d"></script>
-  <script src="js/forecast.js?v=be-f59caf0c6d"></script>
-  <script src="js/fccache.js?v=be-f59caf0c6d"></script>
-  <script src="js/model.js?v=be-f59caf0c6d"></script>
-  <script src="js/guidance.js?v=be-f59caf0c6d"></script>
-  <script src="js/demo.js?v=be-f59caf0c6d"></script>
-  <script src="js/validate.js?v=be-f59caf0c6d"></script>
-  <script src="js/ics.js?v=be-f59caf0c6d"></script>
-  <script src="js/share.js?v=be-f59caf0c6d"></script>
-  <script src="js/places.js?v=be-f59caf0c6d"></script>
-  <script src="js/i18n.js?v=be-f59caf0c6d"></script>
-  <script src="js/store.js?v=be-f59caf0c6d"></script>
-  <script src="js/app.js?v=be-f59caf0c6d"></script>
+  <script src="js/aqi.js?v=be-8aef26b40e"></script>
+  <script src="js/zones.js?v=be-8aef26b40e"></script>
+  <script src="js/forecast.js?v=be-8aef26b40e"></script>
+  <script src="js/fccache.js?v=be-8aef26b40e"></script>
+  <script src="js/model.js?v=be-8aef26b40e"></script>
+  <script src="js/guidance.js?v=be-8aef26b40e"></script>
+  <script src="js/demo.js?v=be-8aef26b40e"></script>
+  <script src="js/validate.js?v=be-8aef26b40e"></script>
+  <script src="js/ics.js?v=be-8aef26b40e"></script>
+  <script src="js/share.js?v=be-8aef26b40e"></script>
+  <script src="js/places.js?v=be-8aef26b40e"></script>
+  <script src="js/i18n.js?v=be-8aef26b40e"></script>
+  <script src="js/store.js?v=be-8aef26b40e"></script>
+  <script src="js/app.js?v=be-8aef26b40e"></script>
 </body>
 </html>
