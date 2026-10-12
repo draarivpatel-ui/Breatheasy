@@ -110,7 +110,7 @@ The plan is on paper in a drawer; the forecast is in a different app. BreatheEas
 
 ## Accessibility
 
-Semantic landmarks and headings, skip link, every control labelled, live regions for results, color never the only signal (every AQI color carries its category name; every zone its name), ≥ 44 px touch targets, visible focus rings, `prefers-reduced-motion` respected, `lang` switches with the language, chart mirrored by a data table for screen readers. Mobile-first and tested at 390 px.
+Semantic landmarks and headings, skip link, every control labelled, live regions for results, color never the only signal (every AQI color carries its category name; every zone its name), touch targets at least 44 px tall on buttons, tabs, form fields and city search (the inline "Call 911" link and the small "Explain" buttons are at least 40 px; the e2e run checks every button is ≥ 40 px and the search controls ≥ 44 px), visible focus rings, `prefers-reduced-motion` respected, `lang` switches with the language, chart mirrored by a data table for screen readers. Mobile-first and tested at 390 px.
 
 > **Maintainer note:** if the live link 404s, GitHub Pages is not enabled yet. In the repo go to Settings > Pages > Build and deployment > Source: Deploy from a branch > `main` / `(root)` > Save. It goes live in about a minute.
 
