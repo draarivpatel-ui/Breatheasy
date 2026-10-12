@@ -198,3 +198,8 @@ This project was built with help from an AI coding assistant (Hark), which draft
 - Open-Meteo, [Air Quality API](https://open-meteo.com/en/docs/air-quality-api) (data: Copernicus CAMS, CC BY 4.0) and [Weather API](https://open-meteo.com/en/docs)
 
 MIT License.
+
+## Known limits
+- Air and forecast data come from public sources (see Sources); if one is down the app says so rather than guessing.
+- The personal outlook uses SYNTHETIC demo data only, and is labelled as such.
+- BreatheEasy is information, not clinical advice. Follow your own asthma action plan and clinician.
