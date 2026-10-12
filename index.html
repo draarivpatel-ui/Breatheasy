@@ -12,7 +12,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="BreatheEasy">
-  <link rel="stylesheet" href="styles.css?v=be-9a614abeb3">
+  <script>/* Spanish users: keep the English HTML from flashing before js/app.js swaps in Spanish (styles.css reveals after 3 s regardless). Mirrors the language pick in js/app.js. */
+  (function () { try { var st = JSON.parse(localStorage.getItem('breatheeasy.v1') || 'null');
+    var l = st && st.lang ? st.lang : ((navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en');
+    if (l === 'es') { document.documentElement.lang = 'es'; document.documentElement.classList.add('i18n-wait'); } } catch (e) {} })();</script>
+  <link rel="stylesheet" href="styles.css?v=be-492b67104a">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -341,18 +345,18 @@
 
   <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-9a614abeb3"></script>
-  <script src="js/zones.js?v=be-9a614abeb3"></script>
-  <script src="js/forecast.js?v=be-9a614abeb3"></script>
-  <script src="js/fccache.js?v=be-9a614abeb3"></script>
-  <script src="js/model.js?v=be-9a614abeb3"></script>
-  <script src="js/guidance.js?v=be-9a614abeb3"></script>
-  <script src="js/demo.js?v=be-9a614abeb3"></script>
-  <script src="js/validate.js?v=be-9a614abeb3"></script>
-  <script src="js/ics.js?v=be-9a614abeb3"></script>
-  <script src="js/share.js?v=be-9a614abeb3"></script>
-  <script src="js/places.js?v=be-9a614abeb3"></script>
-  <script src="js/i18n.js?v=be-9a614abeb3"></script>
-  <script src="js/app.js?v=be-9a614abeb3"></script>
+  <script src="js/aqi.js?v=be-492b67104a"></script>
+  <script src="js/zones.js?v=be-492b67104a"></script>
+  <script src="js/forecast.js?v=be-492b67104a"></script>
+  <script src="js/fccache.js?v=be-492b67104a"></script>
+  <script src="js/model.js?v=be-492b67104a"></script>
+  <script src="js/guidance.js?v=be-492b67104a"></script>
+  <script src="js/demo.js?v=be-492b67104a"></script>
+  <script src="js/validate.js?v=be-492b67104a"></script>
+  <script src="js/ics.js?v=be-492b67104a"></script>
+  <script src="js/share.js?v=be-492b67104a"></script>
+  <script src="js/places.js?v=be-492b67104a"></script>
+  <script src="js/i18n.js?v=be-492b67104a"></script>
+  <script src="js/app.js?v=be-492b67104a"></script>
 </body>
 </html>

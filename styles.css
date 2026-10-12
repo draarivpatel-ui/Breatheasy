@@ -265,3 +265,7 @@ legend { font-weight: 700; padding: 0 6px; display: flex; align-items: center; g
 .try-demo { margin-top: 10px; }
 .try-demo[hidden] { display: none; }
 .demo-tag { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #efe7ff; color: #3b1f7a; border: 1.5px dashed #7b5cc4; font-size: .8rem; font-weight: 700; }
+
+/* Spanish users: hidden until js/app.js has applied the Spanish strings (no flash of English); always shown after 3 s. */
+html.i18n-wait body { visibility: hidden; animation: i18n-reveal 0s linear 3s forwards; }
+@keyframes i18n-reveal { to { visibility: visible; } }

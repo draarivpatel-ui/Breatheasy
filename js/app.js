@@ -55,6 +55,7 @@
   /* ---------- i18n ---------- */
   function applyI18n() {
     document.documentElement.lang = state.lang;
+    document.documentElement.classList.remove('i18n-wait'); // set by the inline script in index.html for Spanish users
     $('#lang').value = state.lang;
     $$('[data-i18n]').forEach(function (n) { n.textContent = t(n.getAttribute('data-i18n')); });
     if ($('#ics-msg')) $('#ics-msg').textContent = '';
