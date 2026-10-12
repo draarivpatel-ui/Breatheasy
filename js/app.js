@@ -60,6 +60,8 @@
     document.documentElement.classList.remove('i18n-wait'); // set by the inline script in index.html for Spanish users
     $('#lang').value = state.lang;
     $$('[data-i18n]').forEach(function (n) { n.textContent = t(n.getAttribute('data-i18n')); });
+    $$('[data-i18n-aria]').forEach(function (n) { n.setAttribute('aria-label', t(n.getAttribute('data-i18n-aria'))); });
+    document.title = t('doc_title');
     if ($('#ics-msg')) $('#ics-msg').textContent = '';
     $$('[data-only]').forEach(function (n) { n.hidden = n.getAttribute('data-only') !== state.lang; });
     $('#place-q').placeholder = t('place_ph');

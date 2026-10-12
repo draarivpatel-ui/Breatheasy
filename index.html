@@ -25,7 +25,7 @@
   (function () { try { var st = JSON.parse(localStorage.getItem('breatheeasy.v1') || 'null');
     var l = st && (st.lang === 'en' || st.lang === 'es') ? st.lang : ((navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en');
     if (l === 'es') { document.documentElement.lang = 'es'; document.documentElement.classList.add('i18n-wait'); } } catch (e) {} })();</script>
-  <link rel="stylesheet" href="styles.css?v=be-04e855a484">
+  <link rel="stylesheet" href="styles.css?v=be-186ef96aa8">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -49,13 +49,13 @@
     <div class="safety" role="note">
       <div class="wrap">
         <p data-i18n="safety">BreatheEasy helps you follow the plan your doctor gave you. It does not diagnose, prescribe, or replace medical care.</p>
-        <p class="safety-911"><strong data-i18n="safety_911">Trouble walking or talking because of shortness of breath, or blue lips or fingernails? Call 911 now.</strong>
+        <p class="safety-911"><strong data-i18n="safety_911">Trouble walking or talking because of shortness of breath, or lips or fingernails that are blue, pale, or gray? Call 911 now.</strong>
           <a class="btn-911" href="tel:911" data-i18n="call911">Call 911</a></p>
       </div>
     </div>
   </header>
 
-  <nav class="tabs" aria-label="Sections">
+  <nav class="tabs" aria-label="Sections" data-i18n-aria="nav_label">
     <div class="wrap tabs-row">
       <a href="#today" data-i18n="nav_today">Air</a>
       <a href="#checkin" data-i18n="nav_checkin">Check in</a>
@@ -129,7 +129,7 @@
       </article>
 
       <h3 class="sub" data-i18n="four_day">Next days</h3>
-      <ol id="strip" class="strip" aria-label="Daily air quality"></ol>
+      <ol id="strip" class="strip" aria-label="Daily air quality" data-i18n-aria="strip_label"></ol>
     </section>
 
     <!-- CHECK-IN -->
@@ -310,7 +310,7 @@
       </div>
       <div class="card prose" data-only="es" lang="es" hidden>
         <p>Cerca de <strong>4.8 millones de niños en EE. UU. (6.7%)</strong> tienen asma actualmente, y el <strong>47%</strong> tuvo al menos un ataque de asma en el último año (CDC, Encuesta Nacional de Salud 2023). Los médicos dan a las familias un <strong>plan de acción para el asma</strong> en papel con zonas verde, amarilla y roja, pero casi nunca se conecta con el aire de mañana.</p>
-        <p>Eso importa en Houston. El informe <em>State of the Air 2026</em> de la American Lung Association ubica al área de Houston-Pasadena como <strong>la 6.ª peor del país en ozono</strong>, con un promedio de <strong>43.3 días ponderados de ozono dañino al año</strong> en el condado de Harris (datos 2022–2024). La EPA incluye a las personas con asma y a los niños y adolescentes entre los grupos más sensibles al ozono.</p>
+        <p>Eso importa en Houston. El informe <em>State of the Air 2026</em> de la American Lung Association ubica al área de Houston-Pasadena como <strong>la 6.ª peor del país en ozono</strong>, con un promedio de <strong>43.3 días ponderados de ozono insalubre al año</strong> en el condado de Harris (datos 2022–2024). La EPA incluye a las personas con asma y a los niños y adolescentes entre los grupos más sensibles al ozono.</p>
         <p>BreatheEasy pone el plan y el pronóstico en una sola pantalla: calcula el ICA de mañana con los puntos de corte de la EPA, muestra el consejo de la EPA para ese nivel, coloca <em>las palabras de tu médico</em> al lado y aprende de tus registros qué condiciones suelen venir antes de tus días difíciles.</p>
         <h3>Cómo funciona la "IA"</h3>
         <p>Un modelo de regresión logística se entrena en tu navegador con tus propios registros (un día es "difícil" si estuviste en zona amarilla o roja). Datos de entrada: ICA de ozono, ICA de PM2.5, nivel de polen, temperatura máxima, humedad y si el día anterior fue difícil. Muestra los pesos que aprendió, explica cada predicción factor por factor y reporta una precisión honesta con días que no usó para entrenar, junto a una línea base simple. Necesita al menos 14 días, con algunos días buenos y algunos difíciles, antes de dar un pronóstico. Puedes abrir cualquier día pasado para ver qué tomó en cuenta, y una autoevaluación <strong>SINTÉTICA</strong> con personas inventadas muestra qué tan bien coinciden sus porcentajes con la realidad y cómo mejora con más días registrados. Encuentra patrones en <em>tus</em> datos; no diagnostica y no es un dispositivo médico.</p>
@@ -326,6 +326,7 @@
         <h3 data-i18n="sources_h">Sources</h3>
         <ul class="sources" data-only="en" lang="en">
           <li>NHLBI. <a href="https://www.nhlbi.nih.gov/sites/default/files/publications/Asthma-Action-Plan-2020_rev_508.pdf" target="_blank" rel="noopener">Asthma Action Plan</a> (2020; zones and peak-flow percentages, trigger tips).</li>
+          <li>CDC. <a href="https://www.cdc.gov/asthma/action-plan/documents/asthma-action-plan-508.pdf" target="_blank" rel="noopener">Asthma Action Plan</a> (2024; danger signs that mean call 911: trouble walking or talking, or lips or fingernails that are blue, pale, or gray) and <a href="https://www.cdc.gov/asthma/media/pdfs/2024/07/asthma-action-plan-es-508.pdf" target="_blank" rel="noopener">its Spanish version</a>.</li>
           <li>CDC. <a href="https://www.cdc.gov/asthma/most_recent_national_asthma_data.htm" target="_blank" rel="noopener">Most Recent National Asthma Data</a> (2023 NHIS).</li>
           <li>American Lung Association. <a href="https://www.lung.org/media/press-releases/fy26-sota-texas" target="_blank" rel="noopener">State of the Air 2026, Texas</a>.</li>
           <li>U.S. EPA. <a href="https://www.ecfr.gov/current/title-40/chapter-I/subchapter-C/part-58/appendix-Appendix%20G%20to%20Part%2058" target="_blank" rel="noopener">AQI breakpoints, 40 CFR Part 58 App. G</a>; <a href="https://www.airnow.gov/aqi/aqi-basics/" target="_blank" rel="noopener">AQI Basics</a>; <a href="https://document.airnow.gov/air-quality-guide-for-ozone.pdf" target="_blank" rel="noopener">Air Quality Guide for Ozone</a>.</li>
@@ -334,6 +335,7 @@
         </ul>
         <ul class="sources" data-only="es" lang="es" hidden>
           <li>NHLBI. <a href="https://www.nhlbi.nih.gov/sites/default/files/publications/Asthma-Action-Plan-2020_rev_508.pdf" target="_blank" rel="noopener">Plan de acción para el asma</a> (en inglés; 2020; zonas, porcentajes de flujo máximo y consejos sobre desencadenantes).</li>
+          <li>CDC. <a href="https://www.cdc.gov/asthma/action-plan/documents/asthma-action-plan-508.pdf" target="_blank" rel="noopener">Plan de acción para el asma</a> (en inglés; 2024; signos de peligro para llamar al 911: problemas para caminar o hablar, o labios o uñas azules, pálidos o grises) y <a href="https://www.cdc.gov/asthma/media/pdfs/2024/07/asthma-action-plan-es-508.pdf" target="_blank" rel="noopener">Plan de acción para el control del asma</a>, su versión en español.</li>
           <li>CDC. <a href="https://www.cdc.gov/asthma/most_recent_national_asthma_data.htm" target="_blank" rel="noopener">Datos nacionales más recientes sobre el asma</a> (en inglés; NHIS 2023).</li>
           <li>American Lung Association. <a href="https://www.lung.org/media/press-releases/fy26-sota-texas" target="_blank" rel="noopener">State of the Air 2026, Texas</a> (en inglés).</li>
           <li>EPA de EE. UU. <a href="https://www.ecfr.gov/current/title-40/chapter-I/subchapter-C/part-58/appendix-Appendix%20G%20to%20Part%2058" target="_blank" rel="noopener">puntos de corte del ICA, 40 CFR Parte 58, Apéndice G</a> (en inglés); <a href="https://www.airnow.gov/aqi/aqi-basics/" target="_blank" rel="noopener">Conceptos básicos del ICA</a> (en inglés); <a href="https://document.airnow.gov/air-quality-guide-for-ozone.pdf" target="_blank" rel="noopener">Guía de calidad del aire para el ozono</a> (en inglés).</li>
@@ -356,19 +358,19 @@
 
   <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-04e855a484"></script>
-  <script src="js/zones.js?v=be-04e855a484"></script>
-  <script src="js/forecast.js?v=be-04e855a484"></script>
-  <script src="js/fccache.js?v=be-04e855a484"></script>
-  <script src="js/model.js?v=be-04e855a484"></script>
-  <script src="js/guidance.js?v=be-04e855a484"></script>
-  <script src="js/demo.js?v=be-04e855a484"></script>
-  <script src="js/validate.js?v=be-04e855a484"></script>
-  <script src="js/ics.js?v=be-04e855a484"></script>
-  <script src="js/share.js?v=be-04e855a484"></script>
-  <script src="js/places.js?v=be-04e855a484"></script>
-  <script src="js/i18n.js?v=be-04e855a484"></script>
-  <script src="js/store.js?v=be-04e855a484"></script>
-  <script src="js/app.js?v=be-04e855a484"></script>
+  <script src="js/aqi.js?v=be-186ef96aa8"></script>
+  <script src="js/zones.js?v=be-186ef96aa8"></script>
+  <script src="js/forecast.js?v=be-186ef96aa8"></script>
+  <script src="js/fccache.js?v=be-186ef96aa8"></script>
+  <script src="js/model.js?v=be-186ef96aa8"></script>
+  <script src="js/guidance.js?v=be-186ef96aa8"></script>
+  <script src="js/demo.js?v=be-186ef96aa8"></script>
+  <script src="js/validate.js?v=be-186ef96aa8"></script>
+  <script src="js/ics.js?v=be-186ef96aa8"></script>
+  <script src="js/share.js?v=be-186ef96aa8"></script>
+  <script src="js/places.js?v=be-186ef96aa8"></script>
+  <script src="js/i18n.js?v=be-186ef96aa8"></script>
+  <script src="js/store.js?v=be-186ef96aa8"></script>
+  <script src="js/app.js?v=be-186ef96aa8"></script>
 </body>
 </html>

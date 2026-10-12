@@ -1,7 +1,7 @@
 """axe-core sweep of every BreatheEasy state at 390 and 1280 px, EN and ES, plus a mid-flow language switch.
 States: first load (fixtures), demo data + insights, check-in errors, check-in saved, plan errors, plan saved,
 city results (same-looking names), city not found, city search down, forecast down (429), offline.
-Run: CHROMIUM_PATH=... python3 tests/axe_states.py   (AXE_JS=/path/axe.min.js optional)"""
+Run: CHROMIUM_PATH=... python3 tests/axe_states.py   (ONLY_VW=390|1280 and ONLY_LANG=en|es split it into shorter runs)   (AXE_JS=/path/axe.min.js optional)"""
 import os, sys, pathlib, json, urllib.request
 from playwright.sync_api import sync_playwright
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -66,6 +66,7 @@ with sync_playwright() as p:
     for vw in (390, 1280):
         if only and str(vw) != only: continue
         for L in ('en', 'es'):
+            if os.environ.get('ONLY_LANG') and L != os.environ['ONLY_LANG']: continue
             for fn in STATES:
                 tag = f'{vw}-{L} {fn.__name__}'; mode['v'] = 'ok'
                 ctx = b.new_context(viewport={'width': vw, 'height': 900}, locale='en-US', bypass_csp=True); pg = ctx.new_page(); errs = []

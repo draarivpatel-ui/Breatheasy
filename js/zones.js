@@ -8,6 +8,9 @@
  *   Red:    very short of breath, quick-relief medicine has not helped, cannot do usual
  *           activities, or symptoms same/worse after 24 h in yellow; peak flow < 50 percent
  *   Danger signs: trouble walking and talking due to shortness of breath; lips or fingernails blue
+ *   (shown to the user in the CDC Asthma Action Plan's newer wording, 2024: trouble walking OR talking, lips or
+ *   fingernails blue, pale, or gray -> go to the hospital or call 911 now:
+ *   https://www.cdc.gov/asthma/action-plan/documents/asthma-action-plan-508.pdf)
  * This module only sorts inputs into the zones the plan defines. Treatment comes from the
  * user's own doctor-written plan, never from this code.
  */
