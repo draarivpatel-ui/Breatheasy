@@ -195,7 +195,11 @@ with sync_playwright() as p:
     check('share note: date, place, AQI 140 + category', 'Saturday, October 10' in note and 'Sugar Land' in note and 'AQI 140, Unhealthy for sensitive groups' in note, note[:200])
     check("share note carries the user's own pre-exercise text", '15 minutes before practice' in note, note)
     check('share note ends with not-medical-advice + 911 line', 'Not medical advice' in note and 'Call 911' in note)
-    check('share gives feedback (copied or select-to-copy)', pg.inner_text('#share-msg').strip() != '', pg.inner_text('#share-msg'))
+    # the message is set when the clipboard promise settles, so wait for it instead of reading it at once (race seen in CI Oct 12)
+    try: pg.wait_for_function("() => document.querySelector('#share-msg').textContent.trim() !== ''", timeout=5000)
+    except Exception: pass
+    share_msg = pg.inner_text('#share-msg')
+    check('share gives feedback (copied or select-to-copy)', share_msg.strip() != '', share_msg)
 
     # Spanish
     pg.select_option('#lang', 'es')
