@@ -200,4 +200,19 @@ This project was built with help from an AI coding assistant (Hark), which draft
 - Houston Health Department, [Pollen and Mold Reports](https://www.houstonhealth.org/services/pollen-mold)
 - Open-Meteo, [Air Quality API](https://open-meteo.com/en/docs/air-quality-api) (data: Copernicus CAMS, CC BY 4.0) and [Weather API](https://open-meteo.com/en/docs)
 
+## Third-party licences
+
+BreatheEasy ships no third-party code or fonts (system fonts only). What it does use from others, with licence and source (checked Oct 13, 2026):
+
+| What | How BreatheEasy uses it | Licence | Source |
+|---|---|---|---|
+| Open-Meteo Air Quality and Weather APIs (air-quality data from Copernicus CAMS) | live forecast; saved responses in tests/fixtures/ for the tests | CC BY 4.0; the app names and links Open-Meteo next to the forecast, in English and Spanish, as the licence asks | https://open-meteo.com/en/licence |
+| Open-Meteo Geocoding API (place names from GeoNames) | city search | GeoNames data, CC BY 4.0 | https://www.geonames.org/ |
+| EPA AQI breakpoints (40 CFR Part 58 App. G) | AQI math in `js/aqi.js` | U.S. federal regulation text, public domain | linked under **Sources** |
+| NHLBI and CDC asthma action plans, CDC Spanish terms | zone wording follows them; the plans are linked, not copied | U.S. government works | linked under **Sources** |
+
+Test tooling only (runs in CI, never shipped to users): Playwright (Apache-2.0) and axe-core (MPL-2.0).
+
+## License
+
 MIT License.
