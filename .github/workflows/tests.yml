@@ -15,6 +15,7 @@ jobs:
       - run: sudo apt-get install -y poppler-utils   # pdfinfo/pdftotext for the print check
       - run: python tests/print_test.py   # Print plan: one Letter page EN/ES (plain, SYNTHETIC demo, long personal plan)
       - run: python tests/axe_states.py   # axe-core: 11 states x 390/1280 x EN/ES, plus a language switch mid-flow
+      - run: python tests/axe_baseline.py # axe-core WCAG 2.2 AA (incl. target-size) at 360/1280: no NEW serious/critical vs the Oct 12 audit baseline
       - run: python tests/lang_flash.py   # Spanish users never see the English page flash; 3 s fail-safe
       - run: python tests/edge.py         # impossible peak flow / personal best / future dates refused; messages follow a language switch
       - run: python tests/saved_state.py  # broken saved data / impossible ?today= never stop the page loading
