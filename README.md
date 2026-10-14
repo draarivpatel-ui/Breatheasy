@@ -178,6 +178,7 @@ onepager.pdf        one-page project description (DSH Hacks submission)
 - The model is only as good as the check-ins; with sparse logs it stays silent. Its calibration and sensitivity numbers come from SYNTHETIC people with a planted pattern, not from patients.
 - Offline, the app shows a forecast saved on this device only if it is under 3 hours old; it cannot get a new forecast without a connection, and after 3 hours it shows no forecast at all rather than a stale one.
 - If a data source is down, the app says so instead of guessing.
+- Your plan and check-ins live only in this browser's `localStorage`. On Safari (iPhone, iPad, Mac), WebKit deletes a site's LocalStorage and service-worker cache "after seven days of Safari use without user interaction on the site" ([WebKit](https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/)), so a week without opening BreatheEasy in Safari can erase the log the model learns from. Adding it to the Home Screen avoids this (WebKit does not expect Home Screen web apps to be affected). **Export my data (JSON)** saves a copy, but the app cannot import it back yet.
 - BreatheEasy is information, not clinical advice. Follow your own asthma action plan and clinician.
 
 ## AI-assistance disclosure
