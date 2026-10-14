@@ -25,7 +25,7 @@
   (function () { try { var st = JSON.parse(localStorage.getItem('breatheeasy.v1') || 'null');
     var l = st && (st.lang === 'en' || st.lang === 'es') ? st.lang : ((navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en');
     if (l === 'es') { document.documentElement.lang = 'es'; document.documentElement.classList.add('i18n-wait'); } } catch (e) {} })();</script>
-  <link rel="stylesheet" href="styles.css?v=be-186ef96aa8">
+  <link rel="stylesheet" href="styles.css?v=be-3bce431b45">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -349,6 +349,8 @@
         <p data-i18n="data_note">Everything stays in this browser (localStorage). There is no account or server, and nothing is tracked.</p>
         <div class="actions">
           <button type="button" class="btn ghost" id="export" data-i18n="export">Export my data (JSON)</button>
+          <button type="button" class="btn ghost" id="restore" data-i18n="restore">Restore from a backup (JSON)</button>
+          <input type="file" id="restore-file" accept="application/json,.json" hidden aria-label="Backup file to restore" data-i18n-aria="restore_file">
           <button type="button" class="btn danger" id="wipe" data-i18n="wipe">Delete all my data</button>
         </div>
         <p id="data-msg" class="status" role="status" aria-live="polite"></p>
@@ -358,19 +360,19 @@
 
   <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-186ef96aa8"></script>
-  <script src="js/zones.js?v=be-186ef96aa8"></script>
-  <script src="js/forecast.js?v=be-186ef96aa8"></script>
-  <script src="js/fccache.js?v=be-186ef96aa8"></script>
-  <script src="js/model.js?v=be-186ef96aa8"></script>
-  <script src="js/guidance.js?v=be-186ef96aa8"></script>
-  <script src="js/demo.js?v=be-186ef96aa8"></script>
-  <script src="js/validate.js?v=be-186ef96aa8"></script>
-  <script src="js/ics.js?v=be-186ef96aa8"></script>
-  <script src="js/share.js?v=be-186ef96aa8"></script>
-  <script src="js/places.js?v=be-186ef96aa8"></script>
-  <script src="js/i18n.js?v=be-186ef96aa8"></script>
-  <script src="js/store.js?v=be-186ef96aa8"></script>
-  <script src="js/app.js?v=be-186ef96aa8"></script>
+  <script src="js/aqi.js?v=be-3bce431b45"></script>
+  <script src="js/zones.js?v=be-3bce431b45"></script>
+  <script src="js/forecast.js?v=be-3bce431b45"></script>
+  <script src="js/fccache.js?v=be-3bce431b45"></script>
+  <script src="js/model.js?v=be-3bce431b45"></script>
+  <script src="js/guidance.js?v=be-3bce431b45"></script>
+  <script src="js/demo.js?v=be-3bce431b45"></script>
+  <script src="js/validate.js?v=be-3bce431b45"></script>
+  <script src="js/ics.js?v=be-3bce431b45"></script>
+  <script src="js/share.js?v=be-3bce431b45"></script>
+  <script src="js/places.js?v=be-3bce431b45"></script>
+  <script src="js/i18n.js?v=be-3bce431b45"></script>
+  <script src="js/store.js?v=be-3bce431b45"></script>
+  <script src="js/app.js?v=be-3bce431b45"></script>
 </body>
 </html>

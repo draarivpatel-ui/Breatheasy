@@ -154,6 +154,10 @@
     about_h: 'Background',
     data_h: 'Your data', data_note: 'Everything stays in this browser (localStorage). There is no account or server, and nothing is tracked.',
     export: 'Export my data (JSON)', wipe: 'Delete all my data', wipe_confirm: 'Delete your plan and all check-ins from this device?', wiped: 'All data deleted.',
+    restore: 'Restore from a backup (JSON)', restore_file: 'Backup file to restore',
+    restore_confirm: 'Replace your plan and check-ins on this device with the backup ({n} check-ins)?',
+    restored: 'Backup restored: your plan and {n} check-ins.', restored_dropped: 'Backup restored: your plan and {n} check-ins. {d} broken rows were skipped.',
+    restore_bad: "That file isn't a BreatheEasy backup. Nothing was changed.", restore_too_big: 'That file is too big to be a BreatheEasy backup (over 1 MB). Nothing was changed.',
     sources_h: 'Sources', limits_h: 'Limits',
     footer: 'Built for DSH Hacks V2 (AI \u00d7 Healthcare). Not medical advice.'
   };
@@ -305,6 +309,10 @@
     about_h: 'Contexto',
     data_h: 'Tus datos', data_note: 'Todo se queda en este navegador (localStorage). No hay cuenta ni servidor, y no se rastrea nada.',
     export: 'Exportar mis datos (JSON)', wipe: 'Borrar todos mis datos', wipe_confirm: '\u00bfBorrar tu plan y todos tus registros de este dispositivo?', wiped: 'Se borraron todos los datos.',
+    restore: 'Restaurar una copia de seguridad (JSON)', restore_file: 'Archivo de copia de seguridad para restaurar',
+    restore_confirm: '\u00bfReemplazar tu plan y tus registros en este dispositivo con la copia de seguridad ({n} registros)?',
+    restored: 'Copia restaurada: tu plan y {n} registros.', restored_dropped: 'Copia restaurada: tu plan y {n} registros. Se omitieron {d} filas da\u00f1adas.',
+    restore_bad: 'Ese archivo no es una copia de seguridad de BreatheEasy. No se cambi\u00f3 nada.', restore_too_big: 'Ese archivo es demasiado grande para ser una copia de BreatheEasy (m\u00e1s de 1 MB). No se cambi\u00f3 nada.',
     sources_h: 'Fuentes', limits_h: 'L\u00edmites',
     footer: 'Hecho para DSH Hacks V2 (IA \u00d7 Salud). No es consejo m\u00e9dico.'
   };

@@ -4,7 +4,7 @@
   var AQI = window.BE_AQI, Z = window.BE_Zones, F = window.BE_Forecast, M = window.BE_Model,
     G = window.BE_Guidance, P = window.BE_Places, FC = window.BE_FcCache, DEMO = window.BE_Demo, V = window.BE_Validate, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share, ST = window.BE_Store;
 
-  var KEY = 'breatheeasy.v1', DEMO_KEY = 'breatheeasy.demo.v1', FC_KEY = 'breatheeasy.forecast.v1';
+  var KEY = 'breatheeasy.v1', DEMO_KEY = 'breatheeasy.demo.v1', FC_KEY = 'breatheeasy.forecast.v1', PERSIST_KEY = 'breatheeasy.persist-asked.v1';
   var PLACES = {
     sugarland: { lat: 29.6197, lon: -95.6349, key: 'loc_sugarland' },
     houston: { lat: 29.7604, lon: -95.3698, key: 'loc_houston' },
@@ -30,6 +30,7 @@
   var demo = ST.demo(load(DEMO_KEY, null)); // array of synthetic entries or null
   // One-line notes that must follow a language switch: form errors (i18n keys), 'Plan saved', 'All data deleted'.
   var formErr = { ci: null, plan: null }, planSaved = false, wiped = false, lastResult = null;
+  var dataMsg = null; // {key, params}: the Restore result, re-worded on a language switch
   // Forecast for the current place, from Open-Meteo or the per-place cache (js/fccache.js).
   // The old single-slot cache (FC_KEY) could show another city's forecast, so it is dropped.
   try { localStorage.removeItem(FC_KEY); } catch (e) { /* ignore */ }
@@ -47,7 +48,7 @@
   var TOMORROW = addDays(TODAY, 1);
 
   function t(k, p) { return I.t(state.lang, k, p); }
-  function persist() { save(KEY, state); }
+  function persist() { save(KEY, state); ST.requestPersist(navigator, localStorage, PERSIST_KEY); } // asks once to keep storage (no UI)
 
   function fmtDate(iso, opts) {
     var d = new Date(iso + 'T12:00:00');
@@ -70,7 +71,8 @@
     $('#ci-err').textContent = formErr.ci ? t(formErr.ci) : '';
     $('#plan-err').textContent = formErr.plan ? t(formErr.plan) : '';
     $('#plan-msg').textContent = planSaved ? t('plan_saved') : '';
-    if (wiped) $('#data-msg').textContent = t('wiped');
+    if (dataMsg) $('#data-msg').textContent = t(dataMsg.key, dataMsg.params);
+    else if (wiped) $('#data-msg').textContent = t('wiped');
     if (lastResult && !$('#ci-result').hidden) showResult(lastResult); // the check-in result box, re-worded
     var so = $('#loc-search-opt');
     so.hidden = !state.searched; so.textContent = state.searched ? state.searched.name : '';
@@ -646,6 +648,25 @@
     } else copyShare();
   }
 
+  /* ---------- restore from a backup file ---------- */
+  function showDataMsg(key, params) { dataMsg = { key: key, params: params }; wiped = false; $('#data-msg').textContent = t(key, params); }
+  function onRestoreFile() {
+    var f = this.files && this.files[0]; if (!f) return;
+    if (f.size > ST.MAX_BACKUP_BYTES) return showDataMsg('restore_too_big');
+    var read = f.text ? f.text() : new Promise(function (ok, bad) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.onerror = bad; r.readAsText(f); });
+    read.then(applyBackup, function () { showDataMsg('restore_bad'); });
+  }
+  function applyBackup(text) {
+    var b = ST.parseBackup(text);
+    if (!b.ok) return showDataMsg(b.error === 'too_big' ? 'restore_too_big' : 'restore_bad');
+    var hasData = state.entries.length > 0 || state.plan.personalBest != null || ['green', 'yellow', 'red', 'beforeExercise', 'doctorPhone'].some(function (k) { return state.plan[k]; });
+    if (hasData && !window.confirm(t('restore_confirm', { n: b.entries.length }))) return;
+    state.plan = b.plan; state.entries = b.entries;
+    persist(); renderPlanForm(); $('#ci-result').hidden = true; formErr = { ci: null, plan: null }; planSaved = false;
+    showDataMsg(b.dropped ? 'restored_dropped' : 'restored', { n: b.entries.length, d: b.dropped });
+    renderAll();
+  }
+
   /* ---------- wire up ---------- */
   function init() {
     buildChecks(); applyI18n(); renderPlanForm();
@@ -697,13 +718,15 @@
     $('#share-copy').addEventListener('click', copyShare);
     $('#print').addEventListener('click', function () { window.print(); });
     $('#export').addEventListener('click', function () {
-      download('breatheeasy-data.json', 'application/json', JSON.stringify({ exportedAt: new Date().toISOString(), plan: state.plan, entries: state.entries }, null, 2));
+      download('breatheeasy-data.json', 'application/json', ST.backupText(state, new Date().toISOString()));
     });
+    $('#restore').addEventListener('click', function () { $('#restore-file').value = ''; $('#restore-file').click(); });
+    $('#restore-file').addEventListener('change', onRestoreFile);
     $('#wipe').addEventListener('click', function () {
       if (!window.confirm(t('wipe_confirm'))) return;
       [KEY, DEMO_KEY, FC_KEY].forEach(function (k) { localStorage.removeItem(k); }); FC.clear(localStorage);
       state = { lang: state.lang, place: 'sugarland', custom: null, searched: null, plan: { triggers: [] }, entries: [] }; demo = null;
-      persist(); renderPlanForm(); $('#ci-result').hidden = true; formErr = { ci: null, plan: null }; planSaved = false; wiped = true; $('#data-msg').textContent = t('wiped'); renderAll(); fetchForecast();
+      persist(); renderPlanForm(); $('#ci-result').hidden = true; formErr = { ci: null, plan: null }; planSaved = false; wiped = true; dataMsg = null; $('#data-msg').textContent = t('wiped'); renderAll(); fetchForecast();
     });
     if (qs.get('demo') === '1' && !demo) { demo = DEMO.generate(TODAY, 75, 400, 42); save(DEMO_KEY, demo); }
     renderAll();

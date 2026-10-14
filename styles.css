@@ -36,7 +36,7 @@ a:hover { color: var(--brand); }
 .safety p { margin: 6px 0; }
 .safety .wrap { padding-top: 6px; padding-bottom: 6px; }
 .safety-911 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.btn-911 { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border-radius: 4px; background: var(--red); color: #fff !important; font-weight: 700; text-decoration: none; }
+.btn-911 { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 14px; border-radius: 4px; background: var(--red); color: #fff !important; font-weight: 700; text-decoration: none; }
 
 /* tabs */
 .tabs { position: sticky; top: 0; z-index: 20; background: #fff; border-bottom: 1px solid var(--line); }
@@ -216,7 +216,7 @@ legend { font-weight: 700; padding: 0 6px; display: flex; align-items: center; g
 }
 
 /* explain a past day */
-.btn-mini { margin-left: auto; min-height: 40px; padding: 6px 12px; font-size: .85rem; }
+.btn-mini { margin-left: auto; min-height: 44px; padding: 6px 12px; font-size: .85rem; }
 .h-text { min-width: 0; }
 .ex-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; margin: 10px 0 4px; }
 .ex-now { font-weight: 600; }
