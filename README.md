@@ -185,7 +185,7 @@ onepager.pdf        one-page project description (DSH Hacks submission)
 
 This project was built with help from an AI coding assistant (Hark), which drafted code, tests and copy under Aariv Patel's direction. Every statistic and guideline above was checked against the linked source pages.
 
-The demo video (submitted Oct 11, 2026) was also made with Hark: the narration is a synthetic text-to-speech voice (Microsoft Edge neural TTS, en-US-Andrew) reading a Hark-drafted script, over screen recordings of the live app, with the Sugar Land forecast replayed from a saved real Open-Meteo response (an on-screen banner says so). Its test counts (63 unit, 99 browser) were true when it was recorded; the current counts are in **Tests**.
+The demo video on the Devpost page (rendered Oct 12, 2026) was also made with Hark: the narration is a synthetic text-to-speech voice (Piper, en_US-ryan-high) reading a Hark-drafted script, over screen recordings of the live app, with the Sugar Land forecast replayed from a saved real Open-Meteo response (an on-screen banner says so). Its test counts (125 unit, 142 browser) were true when it was rendered; the current counts are in **Tests**.
 
 ## Data sources
 
