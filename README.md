@@ -30,7 +30,7 @@ Built for **DSH Hacks V2** (theme: AI × Healthcare).
 3. Run the tests (Node 18+, no install):
    ```bash
    git clone https://github.com/draarivpatel-ui/Breatheasy && cd Breatheasy
-   npm test        # node --test; ends with "# pass 125" and "# fail 0"
+   npm test        # node --test; ends with "# pass 126" and "# fail 0"
    ```
    Optional: `python3 tests/e2e.py` (Playwright) runs 142 headless-Chromium checks against saved real API responses.
 
@@ -126,10 +126,10 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 12, 2026 (GitHub Actions, headless Chromium): **125/125 unit tests and 526/526 browser checks passing (142 end-to-end, 220 axe-core, 60 edge-input, 48 saved-data, 42 print, 14 language-flash)**. GitHub Actions (`.github/workflows/tests.yml`) runs every suite below on every push to `main`.
+Last run Oct 13, 2026 (GitHub Actions run 38490294861 on d311c5d, headless Chromium): **126/126 unit tests and 526/526 browser checks passing (142 end-to-end, 220 axe-core, 60 edge-input, 48 saved-data, 42 print, 14 language-flash)**. GitHub Actions (`.github/workflows/tests.yml`) runs every suite below on every push to `main`.
 
 ```bash
-node --test tests/*.test.js                          # 125 unit tests: AQI math (incl. every worked example in EPA's AQI Technical Assistance Document), zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics (UTF-8 byte folding at 75 octets, EN/ES), share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish), EN/ES "Why BreatheEasy" parity (same model inputs as js/model.js, same numbers and links), and every number quoted on the submitted Devpost page re-computed from the code (tests/devpost-claims.test.js), and a table of saved data from an older or hand-edited copy (js/store.js: a string, a list, an unknown language or place, bad diary rows dropped one by one, impossible ?today= dates), and the link preview (Open Graph + large Twitter card with a real 1280x800 screenshot)
+node --test tests/*.test.js                          # 126 unit tests: AQI math (incl. every worked example in EPA's AQI Technical Assistance Document), zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics (UTF-8 byte folding at 75 octets, EN/ES), share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish), EN/ES "Why BreatheEasy" parity (same model inputs as js/model.js, same numbers and links), and every number quoted on the submitted Devpost page re-computed from the code (tests/devpost-claims.test.js), and a table of saved data from an older or hand-edited copy (js/store.js: a string, a list, an unknown language or place, bad diary rows dropped one by one, impossible ?today= dates), and the link preview (Open Graph + large Twitter card with a real 1280x800 screenshot), and every relative link in this README resolves to a file in the repo (tests/readme-paths.test.js)
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 142 headless-Chromium checks (pip install playwright)
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/axe_states.py # 220 checks: axe-core 0 violations in 11 states (first load, demo, check-in errors/saved, plan errors/saved, city results/not found/search down, forecast 429, offline) x 390/1280 px x EN/ES, again after switching language mid-flow
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/axe_baseline.py # 10 checks: WCAG 2.2 AA + best-practice axe-core guard at 360/1280 px, incl. target-size (WCAG 2.5.8, off by default in axe): fails only on a serious/critical violation not in the Oct 12, 2026 audit baseline
@@ -184,6 +184,8 @@ onepager.pdf        one-page project description (DSH Hacks submission)
 ## AI-assistance disclosure
 
 This project was built with help from an AI coding assistant (Hark), which drafted code, tests and copy under Aariv Patel's direction. Every statistic and guideline above was checked against the linked source pages.
+
+The demo video (submitted Oct 11, 2026) was also made with Hark: the narration is a synthetic text-to-speech voice (Microsoft Edge neural TTS, en-US-Andrew) reading a Hark-drafted script, over screen recordings of the live app, with the Sugar Land forecast replayed from a saved real Open-Meteo response (an on-screen banner says so). Its test counts (63 unit, 99 browser) were true when it was recorded; the current counts are in **Tests**.
 
 ## Data sources
 
