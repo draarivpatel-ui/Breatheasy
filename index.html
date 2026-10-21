@@ -25,7 +25,7 @@
   (function () { try { var st = JSON.parse(localStorage.getItem('breatheeasy.v1') || 'null');
     var l = st && (st.lang === 'en' || st.lang === 'es') ? st.lang : ((navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en');
     if (l === 'es') { document.documentElement.lang = 'es'; document.documentElement.classList.add('i18n-wait'); } } catch (e) {} })();</script>
-  <link rel="stylesheet" href="styles.css?v=be-186ef96aa8">
+  <link rel="stylesheet" href="styles.css?v=be-1801081bbb">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -97,12 +97,11 @@
       <article id="plan-card" class="card plan-card" aria-labelledby="pc-h">
         <div class="pc-top">
           <div>
-            <p class="eyebrow" data-i18n="tomorrow">Tomorrow</p>
-            <h3 id="pc-h"><span id="pc-date">—</span></h3>
+            <h3 id="pc-h"><span data-i18n="tomorrow">Tomorrow</span> · <span id="pc-date">-</span></h3>
             <p id="pc-cat" class="pc-cat"></p>
           </div>
           <div id="pc-aqi" class="aqi-badge" aria-live="polite">
-            <span class="aqi-num">—</span><span class="aqi-label" data-i18n="aqi">AQI</span>
+            <span class="aqi-num">-</span><span class="aqi-label" data-i18n="aqi">AQI</span>
           </div>
         </div>
         <dl id="pc-facts" class="facts"></dl>
@@ -297,7 +296,7 @@
       <h2 id="about-h" data-i18n="about_h">Background</h2>
       <div class="card prose" data-only="en" lang="en">
         <p>About <strong>4.8 million U.S. children (6.7%)</strong> have asthma right now, and <strong>47%</strong> of them had at least one asthma attack in the past year (CDC, 2023 National Health Interview Survey). Doctors hand families a paper <strong>asthma action plan</strong> with green, yellow and red zones, but it rarely gets connected to tomorrow's air.</p>
-        <p>That matters in Houston. The American Lung Association's <em>State of the Air 2026</em> ranks the Houston-Pasadena metro <strong>6th worst in the nation for ozone</strong>, with Harris County averaging <strong>43.3 weighted unhealthy ozone days a year</strong> (2022–2024 data). EPA lists people with asthma and children and teenagers among the groups most sensitive to ozone.</p>
+        <p>That matters in Houston. The American Lung Association's <em>State of the Air 2026</em> ranks the Houston-Pasadena metro <strong>6th worst in the nation for ozone</strong>, with Harris County averaging <strong>43.3 weighted unhealthy ozone days a year</strong> (2022 to 2024 data). EPA lists people with asthma and children and teenagers among the groups most sensitive to ozone.</p>
         <p>BreatheEasy puts the plan and the forecast on one screen: it computes tomorrow's AQI from the forecast using EPA's breakpoints, shows EPA's advice for that level, puts <em>your doctor's own words</em> next to it, and learns from your check-ins which conditions tend to come before your rough days.</p>
         <h3>How the "AI" works</h3>
         <p>A logistic-regression model trains in your browser on your own check-ins (a day is "rough" if you were in the yellow or red zone). Inputs: ozone AQI, PM2.5 AQI, pollen level, high temperature, humidity, and whether yesterday was rough. It shows its learned weights, explains each prediction feature by feature, and reports an honest held-out accuracy next to a naive baseline. It needs at least 14 days with some good and some rough days before it says anything. You can open any past day to see what it weighed, and a <strong>SYNTHETIC</strong> self-check on made-up people shows how well its percentages match reality and how it improves with more logged days. It finds patterns in <em>your</em> data; it does not diagnose and it is not a medical device.</p>
@@ -310,7 +309,7 @@
       </div>
       <div class="card prose" data-only="es" lang="es" hidden>
         <p>Cerca de <strong>4.8 millones de niños en EE. UU. (6.7%)</strong> tienen asma actualmente, y el <strong>47%</strong> tuvo al menos un ataque de asma en el último año (CDC, Encuesta Nacional de Salud 2023). Los médicos dan a las familias un <strong>plan de acción para el asma</strong> en papel con zonas verde, amarilla y roja, pero casi nunca se conecta con el aire de mañana.</p>
-        <p>Eso importa en Houston. El informe <em>State of the Air 2026</em> de la American Lung Association ubica al área de Houston-Pasadena como <strong>la 6.ª peor del país en ozono</strong>, con un promedio de <strong>43.3 días ponderados de ozono insalubre al año</strong> en el condado de Harris (datos 2022–2024). La EPA incluye a las personas con asma y a los niños y adolescentes entre los grupos más sensibles al ozono.</p>
+        <p>Eso importa en Houston. El informe <em>State of the Air 2026</em> de la American Lung Association ubica al área de Houston-Pasadena como <strong>la 6.ª peor del país en ozono</strong>, con un promedio de <strong>43.3 días ponderados de ozono insalubre al año</strong> en el condado de Harris (datos 2022 a 2024). La EPA incluye a las personas con asma y a los niños y adolescentes entre los grupos más sensibles al ozono.</p>
         <p>BreatheEasy pone el plan y el pronóstico en una sola pantalla: calcula el ICA de mañana con los puntos de corte de la EPA, muestra el consejo de la EPA para ese nivel, coloca <em>las palabras de tu médico</em> al lado y aprende de tus registros qué condiciones suelen venir antes de tus días difíciles.</p>
         <h3>Cómo funciona la "IA"</h3>
         <p>Un modelo de regresión logística se entrena en tu navegador con tus propios registros (un día es "difícil" si estuviste en zona amarilla o roja). Datos de entrada: ICA de ozono, ICA de PM2.5, nivel de polen, temperatura máxima, humedad y si el día anterior fue difícil. Muestra los pesos que aprendió, explica cada predicción factor por factor y reporta una precisión honesta con días que no usó para entrenar, junto a una línea base simple. Necesita al menos 14 días, con algunos días buenos y algunos difíciles, antes de dar un pronóstico. Puedes abrir cualquier día pasado para ver qué tomó en cuenta, y una autoevaluación <strong>SINTÉTICA</strong> con personas inventadas muestra qué tan bien coinciden sus porcentajes con la realidad y cómo mejora con más días registrados. Encuentra patrones en <em>tus</em> datos; no diagnostica y no es un dispositivo médico.</p>
@@ -358,19 +357,19 @@
 
   <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-186ef96aa8"></script>
-  <script src="js/zones.js?v=be-186ef96aa8"></script>
-  <script src="js/forecast.js?v=be-186ef96aa8"></script>
-  <script src="js/fccache.js?v=be-186ef96aa8"></script>
-  <script src="js/model.js?v=be-186ef96aa8"></script>
-  <script src="js/guidance.js?v=be-186ef96aa8"></script>
-  <script src="js/demo.js?v=be-186ef96aa8"></script>
-  <script src="js/validate.js?v=be-186ef96aa8"></script>
-  <script src="js/ics.js?v=be-186ef96aa8"></script>
-  <script src="js/share.js?v=be-186ef96aa8"></script>
-  <script src="js/places.js?v=be-186ef96aa8"></script>
-  <script src="js/i18n.js?v=be-186ef96aa8"></script>
-  <script src="js/store.js?v=be-186ef96aa8"></script>
-  <script src="js/app.js?v=be-186ef96aa8"></script>
+  <script src="js/aqi.js?v=be-1801081bbb"></script>
+  <script src="js/zones.js?v=be-1801081bbb"></script>
+  <script src="js/forecast.js?v=be-1801081bbb"></script>
+  <script src="js/fccache.js?v=be-1801081bbb"></script>
+  <script src="js/model.js?v=be-1801081bbb"></script>
+  <script src="js/guidance.js?v=be-1801081bbb"></script>
+  <script src="js/demo.js?v=be-1801081bbb"></script>
+  <script src="js/validate.js?v=be-1801081bbb"></script>
+  <script src="js/ics.js?v=be-1801081bbb"></script>
+  <script src="js/share.js?v=be-1801081bbb"></script>
+  <script src="js/places.js?v=be-1801081bbb"></script>
+  <script src="js/i18n.js?v=be-1801081bbb"></script>
+  <script src="js/store.js?v=be-1801081bbb"></script>
+  <script src="js/app.js?v=be-1801081bbb"></script>
 </body>
 </html>

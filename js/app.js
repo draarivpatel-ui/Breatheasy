@@ -234,7 +234,7 @@
       $('#pc-cat').textContent = catLabel(g.category);
       $('#plan-card').setAttribute('data-cat', g.category.key);
     } else {
-      num.textContent = '—'; badge.style.background = ''; badge.style.color = '';
+      num.textContent = '-'; badge.style.background = ''; badge.style.color = '';
       $('#pc-cat').textContent = forecast ? '' : t('forecast_none');
       $('#plan-card').removeAttribute('data-cat');
     }
@@ -408,7 +408,7 @@
         $('#why-h').textContent = t('why_h', { band: t('risk_' + M.band(pred.p)).toLowerCase() });
         var ul = $('#why-list'); ul.innerHTML = '';
         pred.contributions.slice(0, 4).forEach(function (c) {
-          var v = c.value == null ? '—' : c.key === 'pollenLevel' && d.pollenLevel == null ? t('pollen_logged', { level: t('pollen_' + c.value) }) : fmtFeature(c);
+          var v = c.value == null ? '-' : c.key === 'pollenLevel' && d.pollenLevel == null ? t('pollen_logged', { level: t('pollen_' + c.value) }) : fmtFeature(c);
           ul.appendChild(el('li', { class: c.contribution >= 0 ? 'up' : 'down' }, t('f_' + c.feature) + ': ' + v + ' → ' + (c.contribution >= 0 ? '▲ ' + t('dir_up') : '▼ ' + t('dir_down'))));
         });
       } else $('#why').hidden = true;
@@ -479,7 +479,7 @@
       bar.style.width = (Math.abs(c.contribution) / max * 50) + '%';
       track.appendChild(bar); li.appendChild(track);
       var flat = Math.abs(c.contribution) < 0.005;
-      li.appendChild(el('span', { class: 'ex-val' }, (flat ? '– ' : c.contribution >= 0 ? '▲ ' : '▼ ') + t('explain_odds', { x: c.oddsRatio.toFixed(c.oddsRatio < 10 ? 2 : 1) })));
+      li.appendChild(el('span', { class: 'ex-val' }, (flat ? '- ' : c.contribution >= 0 ? '▲ ' : '▼ ') + t('explain_odds', { x: c.oddsRatio.toFixed(c.oddsRatio < 10 ? 2 : 1) })));
       list.appendChild(li);
     });
     var last = el('li', { class: 'ex-row ex-edge' });
@@ -574,9 +574,9 @@
     var rb = $('#rel-table tbody'); rb.innerHTML = '';
     rel.bins.forEach(function (b) {
       var tr = el('tr');
-      tr.appendChild(el('th', { scope: 'row' }, Math.round(b.lo * 100) + '–' + Math.round(b.hi * 100) + '%'));
-      tr.appendChild(el('td', null, b.n ? pct(b.meanP) : '—'));
-      tr.appendChild(el('td', null, b.n ? pct(b.observed) : '—'));
+      tr.appendChild(el('th', { scope: 'row' }, Math.round(b.lo * 100) + '-' + Math.round(b.hi * 100) + '%'));
+      tr.appendChild(el('td', null, b.n ? pct(b.meanP) : '-'));
+      tr.appendChild(el('td', null, b.n ? pct(b.observed) : '-'));
       tr.appendChild(el('td', null, String(b.n)));
       rb.appendChild(tr);
     });
@@ -623,7 +623,7 @@
   function shareText() {
     var r = renderPlanCard();
     var head = t('share_head', { date: fmtDate(TOMORROW), place: placeName() });
-    var air = r.day && r.guidance.category ? t('share_air', { aqiLabel: t('aqi'), aqi: r.day.aqi, cat: catLabel(r.guidance.category), pol: r.day.dominant ? t(r.day.dominant) : '\u2014' }) : '';
+    var air = r.day && r.guidance.category ? t('share_air', { aqiLabel: t('aqi'), aqi: r.day.aqi, cat: catLabel(r.guidance.category), pol: r.day.dominant ? t(r.day.dominant) : '-' }) : '';
     return SH.note({ heading: head, air: air, items: r.guidance.items.map(function (it) { return t(it.key, it.params); }), footer: [t('share_footer'), t('safety_911')] });
   }
   function copyShare() {

@@ -27,7 +27,7 @@ with sync_playwright() as p:
         pg = b.new_page(viewport={'width': 1280, 'height': 900}, locale='es-US' if lang == 'es' else 'en-US')
         pg.route('**/*open-meteo.com/**', lambda r: r.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=AQ if 'air-quality' in r.request.url else WX))
         pg.goto((ROOT / 'index.html').as_uri() + '?today=2026-10-09')
-        pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '—'")
+        pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
         if pg.evaluate('document.documentElement.lang') != lang: pg.select_option('#lang', lang); pg.wait_for_timeout(200)
         for st in ('plain', 'demo', 'max'):
             if st == 'demo': pg.click('#try-demo'); pg.wait_for_timeout(500)
