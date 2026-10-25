@@ -9,14 +9,14 @@
 }
 h1, h2, h3 { font-family: var(--serif); font-weight: 700; letter-spacing: -.01em; }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 64px; scrollbar-width: thin; scrollbar-color: #9fb3b8 var(--bg); }
+html { overflow-x: clip; scroll-behavior: smooth; scroll-padding-top: 64px; scrollbar-width: thin; scrollbar-color: #9fb3b8 var(--bg); }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: #9fb3b8; border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: #7d969c; }
 ::selection { background: rgba(27, 122, 140, 0.18); color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
-body { overflow-wrap: break-word; /* long unbroken place names wrap instead of widening the page */  margin: 0; font: 16px/1.55 var(--font); color: var(--ink); background: var(--bg); -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; }
+body { overflow-x: clip; overflow-wrap: break-word; /* long unbroken place names wrap instead of widening the page */  margin: 0; font: 16px/1.55 var(--font); color: var(--ink); background: var(--bg); -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; }
 .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
 a { color: var(--brand-2); }
 a:hover { color: var(--brand); }
