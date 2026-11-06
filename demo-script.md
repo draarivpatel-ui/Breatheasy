@@ -33,4 +33,3 @@
 - Don't present the demo data as a real person's log; say "synthetic" out loud while it's on screen.
 - The trust check is on made-up people too: say "made-up" or "synthetic", never "tested" or "validated" on patients. Read the explain-a-day numbers off the screen for the day you pick.
 - If tomorrow's forecast isn't orange, don't claim it is; describe what's actually on screen.
-- It's fine to say an AI assistant helped build it (that's in the README).
