@@ -196,7 +196,7 @@
 
   var api = {
     aqUrl: aqUrl, wxUrl: wxUrl, maxOzone8h: maxOzone8h, dailyAirQuality: dailyAirQuality,
-    pollenLevel: pollenLevel, mergeDays: mergeDays, fetchJson: fetchJson, load: load, POLLEN_VARS: POLLEN_VARS,
+    pollenLevel: pollenLevel, mergeDays: mergeDays, fetchJson: fetchJson, load: load,
     TIMEOUT_MS: TIMEOUT_MS
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

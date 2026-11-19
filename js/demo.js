@@ -53,7 +53,7 @@
     return out;
   }
 
-  var api = { generate: generate, mulberry32: mulberry32, addDays: addDays };
+  var api = { generate: generate, addDays: addDays };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BE_Demo = api;
 })(this);

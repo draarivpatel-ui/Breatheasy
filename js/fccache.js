@@ -83,7 +83,7 @@
   }
 
   var api = {
-    KEY: KEY, FRESH_MS: FRESH_MS, MAX_STALE_MS: MAX_STALE_MS, MAX_PLACES: MAX_PLACES,
+    KEY: KEY,
     placeKey: placeKey, put: put, get: get, clear: clear, getForecast: getForecast, ageParts: ageParts
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

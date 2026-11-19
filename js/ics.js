@@ -37,7 +37,7 @@
     ];
     return lines.map(fold).join('\r\n') + '\r\n';
   }
-  var api = { allDayEvent: allDayEvent, esc: esc, fold: fold };
+  var api = { allDayEvent: allDayEvent, fold: fold };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BE_ICS = api;
 })(this);
