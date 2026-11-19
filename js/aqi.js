@@ -85,7 +85,6 @@
   var api = {
     PM25_24H: PM25_24H,
     O3_8H: O3_8H,
-    CATEGORIES: CATEGORIES,
     truncate: truncate,
     aqiPM25: aqiPM25,
     aqiO3ppm: aqiO3ppm,

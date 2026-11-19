@@ -174,7 +174,7 @@
 
   var api = {
     FEATURES: FEATURES, MIN_DAYS: MIN_DAYS, sigmoid: sigmoid, label: label, rows: rows, prevDate: prevDate,
-    scaler: scaler, fit: fit, predict: predict, weights: weights, evaluate: evaluate, train: train, band: band, explainDay: explainDay
+    fit: fit, predict: predict, weights: weights, evaluate: evaluate, train: train, band: band, explainDay: explainDay
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BE_Model = api;

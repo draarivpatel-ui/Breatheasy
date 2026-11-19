@@ -35,7 +35,7 @@
     return { category: cat, items: items };
   }
 
-  var api = { build: build, ORDER: ORDER };
+  var api = { build: build };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BE_Guidance = api;
 })(this);

@@ -102,7 +102,7 @@
       reliabilityAt: o.reliabilityAt, reliability: rel, calibrationSummary: at ? at.summary : null, sensitivity: sensitivity };
   }
 
-  var api = { DEFAULTS: DEFAULTS, brier: brier, reliability: reliability, heldOut: heldOut, summarize: summarize, run: run };
+  var api = { DEFAULTS: DEFAULTS, brier: brier, reliability: reliability, heldOut: heldOut, run: run };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BE_Validate = api;
 })(this);
