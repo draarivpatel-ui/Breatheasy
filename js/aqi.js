@@ -75,7 +75,9 @@
   }
 
   function category(aqi) {
-    if (aqi == null || !isFinite(aqi)) return null;
+    // A negative or fractional AQI is not a reported index value. Refuse it instead of
+    // silently returning Good (the old code let -1 fall into the first bucket).
+    if (aqi == null || !isFinite(aqi) || aqi < 0) return null;
     for (var i = 0; i < CATEGORIES.length; i++) {
       if (aqi <= CATEGORIES[i].max) return CATEGORIES[i];
     }

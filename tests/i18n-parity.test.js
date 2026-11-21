@@ -9,7 +9,7 @@ const SAME_OK = new Set(['loc_sugarland', 'loc_pasadena', 'pm25', 'sens_col_brie
 
 // Proper nouns, codes and terms that may appear in Spanish text as-is.
 const PROPER = ['BreatheEasy', 'Open-Meteo', 'Copernicus', 'CAMS', 'EPA', 'NHLBI', 'CDC', 'Brier', 'PM2.5', 'JSON', 'localStorage',
-  'DSH Hacks V2', 'Houston', 'Sugar Land', 'Pasadena', 'TX', 'Phoenix', 'Delhi', 'PDF', 'L/min', 'smog', 'log-odds', 'SINTÉTICOS', 'SINTÉTICA', 'SINTÉTICO', 'IA'];
+  'DSH Hacks V2', 'Houston', 'Sugar Land', 'Pasadena', 'TX', 'Phoenix', 'Delhi', 'PDF', 'L/min', 'smog', 'log-odds', 'SINTÉTICOS', 'SINTÉTICA', 'SINTÉTICO'];
 
 // Common English words that are not also Spanish words (so "no", "error", "plan", "real" are left out on purpose).
 const ENGLISH = ['the', 'and', 'you', 'your', 'with', 'for', 'of', 'is', 'are', 'this', 'that', 'from', 'to', 'on', 'at', 'it', 'be',

@@ -19,7 +19,9 @@
   function validDay(s) {
     if (typeof s !== 'string' || !DAY.test(s)) return false;
     var y = +s.slice(0, 4), m = +s.slice(5, 7), d = +s.slice(8, 10);
-    if (y < 1900 || m < 1 || m > 12 || d < 1) return false;
+    // 2200 cap: a 5-digit year (9999-12-31 + 1 day) is outside the ISO calendar the app and its
+    // ICS download can write, so refuse it up front instead of emitting a malformed date.
+    if (y < 1900 || y > 2200 || m < 1 || m > 12 || d < 1) return false;
     return d <= new Date(Date.UTC(y, m, 0)).getUTCDate();
   }
 
@@ -28,7 +30,9 @@
     var lat = num(p.lat), lon = num(p.lon);
     if (lat == null || lon == null || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
     var out = { lat: lat, lon: lon };
-    if (typeof p.name === 'string' && p.name.trim()) out.name = p.name;
+    // Cap the label. An unbounded string in a saved copy would widen the location menu and
+    // could push it past a 375 px viewport; the UI also wraps with overflow-wrap: anywhere.
+    if (typeof p.name === 'string' && p.name.trim()) out.name = p.name.trim().slice(0, 120);
     return out;
   }
 
@@ -37,7 +41,9 @@
     if (!isObj(p)) return out;
     var best = num(p.personalBest);
     out.personalBest = best != null && best >= 50 && best <= 900 && best === Math.round(best) ? best : null;
-    TEXT.forEach(function (k) { if (typeof p[k] === 'string') out[k] = p[k]; });
+    // Cap free-text plan fields. The plan is printed on one page and shown in the share note;
+    // an unbounded saved string could break either layout.
+    TEXT.forEach(function (k) { if (typeof p[k] === 'string') out[k] = p[k].slice(0, 2000); });
     if (Array.isArray(p.triggers)) out.triggers = p.triggers.filter(function (x, i, a) { return TRIGGERS.indexOf(x) !== -1 && a.indexOf(x) === i; });
     return out;
   }
@@ -51,6 +57,9 @@
     ['peakFlow', 'personalBest', 'percent', 'aqiO3', 'aqiPM25', 'pollenLevel', 'tempMaxF', 'humidity'].forEach(function (k) {
       if (own(out, k)) out[k] = num(out[k]);
     });
+    // Pollen is one of the four named levels (0 none, 1 low, 2 moderate, 3 high). An out-of-domain
+    // saved number (99) would fall through i18n and print the raw key pollen_99 on the plan card.
+    if (out.pollenLevel != null && (out.pollenLevel !== Math.round(out.pollenLevel) || out.pollenLevel < 0 || out.pollenLevel > 3)) out.pollenLevel = null;
     out.symptoms = Array.isArray(out.symptoms) ? out.symptoms.filter(function (s) { return typeof s === 'string'; }) : [];
     if (own(out, 'danger')) out.danger = out.danger === true;
     if (own(out, 'reliever')) out.reliever = out.reliever === true;

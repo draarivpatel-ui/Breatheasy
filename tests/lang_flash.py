@@ -44,14 +44,14 @@ with sync_playwright() as p:
         pg.wait_for_timeout(50)
     def go(pg, q=''):
         sep = '&' if QUERY else ''
-        pg.goto(BASE + '?' + QUERY + (sep + q if q else ''), wait_until='commit'); pg.wait_for_function("document.body && getComputedStyle(document.body).visibility")
+        pg.goto(BASE + '?' + QUERY + (sep + q if q else ''), wait_until='commit'); pg.wait_for_function("() => document.body && getComputedStyle(document.body).visibility")
         pg.wait_for_timeout(600)
 
     # 1. Spanish browser, app script slow: page waits hidden instead of showing English, then shows Spanish.
     ctx, pg = page('es-US', hold=True); go(pg)
     check('es: body hidden while the app script loads (no English flash)', visible(pg) == 'hidden', visible(pg))
     check('es: <html lang> already es before the app runs', pg.evaluate('document.documentElement.lang') == 'es')
-    release(pg); pg.wait_for_function("getComputedStyle(document.body).visibility==='visible'", timeout=8000)
+    release(pg); pg.wait_for_function("() => getComputedStyle(document.body).visibility==='visible'", timeout=8000)
     check('es: shown in Spanish once the app ran', ES_HEADING in heading(pg), heading(pg))
     check('es: shown before the 3 s fail-safe (the app revealed it)', pg.evaluate("performance.now()") < 2900, pg.evaluate("performance.now()"))
     ctx.close()
@@ -70,7 +70,7 @@ with sync_playwright() as p:
     for loc, lang, hid, name in (('es-US', 'en', 'visible', 'saved EN on a Spanish browser'), ('en-US', 'es', 'hidden', 'saved ES on an English browser')):
         ctx, pg = page(loc, hold=True, stored={'lang': lang, 'place': 'sugarland', 'custom': None, 'plan': {'triggers': []}, 'entries': []}); go(pg)
         check(f'{name}: body {hid} before the app runs', visible(pg) == hid, visible(pg))
-        release(pg); pg.wait_for_function("getComputedStyle(document.body).visibility==='visible'", timeout=8000)
+        release(pg); pg.wait_for_function("() => getComputedStyle(document.body).visibility==='visible'", timeout=8000)
         want = ES_HEADING if lang == 'es' else EN_HEADING
         check(f'{name}: right language once shown', want in heading(pg), heading(pg))
         ctx.close()
@@ -79,7 +79,7 @@ with sync_playwright() as p:
     check('corrupt saved data on an English browser: visible, no error hides it', visible(pg) == 'visible', visible(pg))
     ctx.close()
     # 6. Mid-flow switch after load never hides the page.
-    ctx, pg = page('es-US'); go(pg); release(pg); pg.wait_for_function("getComputedStyle(document.body).visibility==='visible'", timeout=8000)
+    ctx, pg = page('es-US'); go(pg); release(pg); pg.wait_for_function("() => getComputedStyle(document.body).visibility==='visible'", timeout=8000)
     pg.select_option('#lang', 'en'); pg.wait_for_timeout(100); a = visible(pg); pg.select_option('#lang', 'es'); pg.wait_for_timeout(100)
     check('switching EN/ES after load keeps the page visible', a == 'visible' and visible(pg) == 'visible' and ES_HEADING in heading(pg))
     ctx.close()

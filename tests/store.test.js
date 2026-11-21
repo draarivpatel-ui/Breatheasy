@@ -41,6 +41,11 @@ test('table: diary rows: bad rows are dropped one by one, never the whole diary'
   assert.deepEqual(E('x'), []);
   assert.deepEqual(E([null, 5, 'x', { date: 'x' }, { date: '2026-02-30' }, { date: '2026-10-08', zone: 'purple' }, { date: '2026-10-07' }, good]), [good]);
   assert.deepEqual(E([{ date: '2026-10-08', zone: 'yellow', peakFlow: '300', symptoms: 'cough' }]), [{ date: '2026-10-08', zone: 'yellow', peakFlow: null, symptoms: [] }]);
+  // a hand-edited pollen count outside the named 0-3 levels is dropped, not printed as a raw i18n key
+  assert.equal(E([{ date: '2026-10-08', zone: 'green', pollenLevel: 99 }])[0].pollenLevel, null);
+  assert.equal(E([{ date: '2026-10-08', zone: 'green', pollenLevel: 2.5 }])[0].pollenLevel, null);
+  assert.equal(E([{ date: '2026-10-08', zone: 'green', pollenLevel: -1 }])[0].pollenLevel, null);
+  assert.equal(E([{ date: '2026-10-08', zone: 'green', pollenLevel: 3 }])[0].pollenLevel, 3);
   // one row per day (later copy wins), oldest first
   assert.deepEqual(E([{ ...good, peakFlow: 300 }, { ...good, date: '2026-10-01' }, good]).map(e => [e.date, e.peakFlow]), [['2026-10-01', 380], ['2026-10-09', 380]]);
 });
@@ -52,6 +57,7 @@ test('a diary the app itself wrote passes through unchanged (incl. the SYNTHETIC
 });
 test('table: ?today= accepts real days only', () => {
   for (const [s, ok] of [['2026-10-10', true], ['2024-02-29', true], ['2026-02-29', false], ['2026-02-30', false], ['2026-13-45', false],
-    ['0000-00-00', false], ['2026-00-10', false], ['2026-10-00', false], ['2026-04-31', false], ['2026-10-10x', false], ['', false], [null, false]])
+    ['0000-00-00', false], ['2026-00-10', false], ['2026-10-00', false], ['2026-04-31', false], ['2026-10-10x', false], ['', false], [null, false],
+    ['1899-12-31', false], ['2200-12-31', true], ['2201-01-01', false], ['9999-12-31', false]])
     assert.equal(S.validDay(s), ok, String(s));
 });

@@ -1,6 +1,6 @@
 # BreatheEasy review log
 
-## Cycle 1 · Sat Oct 10, 2026, ~8:25 PM ET (improvement pass for "AI x Healthcare" judging)
+## Cycle 1 · Sat Oct 10, 2026, ~8:25 PM ET (improvement pass for the health + data judging)
 
 Judge's-eye gap: the model already explained tomorrow and reported held-out accuracy on 19 demo days, but a
 health-tech judge would ask "are its percentages trustworthy, how much data does it need, and can I see why it
@@ -15,7 +15,7 @@ said what it said about a specific day?" The app also needed a connection to ope
 | Brier on the per-log eval line | "Honest check … Brier score 0.12 (lower is better)" on the 75-day demo. |
 | Installable + offline PWA | `manifest.webmanifest` (standalone, 192/512 + maskable icons, apple-touch-icon), `sw.js` (network-first pages, cache-first for `?v=`-versioned files, never caches Open-Meteo, deletes old caches, skipWaiting + clients.claim). Registers only over http(s). Offline: app opens from cache and says "You're offline. Showing the forecast saved {time}"; re-fetches on the `online` event. |
 | Cache-busting | `scripts/stamp.js` hashes index.html (normalised), sw.js, manifest, icons and every JS/CSS file into `be-<10 hex>`, written to `sw.js` VERSION and every `?v=` in index.html. A unit test fails if the stamp is stale. Run `node scripts/stamp.js` after any change. |
-| Docs | README (AI section with the SYNTHETIC numbers + table, features, tests, files, limits), devpost.md (what it does, how we built it, accomplishments, what's next), demo-script.md (new 2:15-2:35 beat, kept under 3:00, honesty line), in-app About (EN/ES). |
+| Docs | README (model section with the SYNTHETIC numbers + table, features, tests, files, limits), devpost.md (what it does, how we built it, accomplishments, what's next), demo-script.md (new 2:15-2:35 beat, kept under 3:00, honesty line), in-app About (EN/ES). |
 
 Honesty: no new health guidance was added; all medical text is still the cited NHLBI / EPA / CDC lines plus the
 user's own plan. Every new model number is labelled SYNTHETIC in the app and docs.
@@ -46,14 +46,32 @@ Rubric (dsh-hacks-v2.devpost.com): Idea (theme fit, innovation, impact if deploy
 
 Judge's-eye gaps, ranked:
 1. **Impact / Implementation:** a global, online event with judges outside Texas, but the app only offered Sugar Land, Houston, Pasadena or browser geolocation (often denied in judging setups). A judge could not see *their own* city's tomorrow card.
-2. **Presentation / Idea:** the AI is the headline, but a first visit shows "Log at least 14 days…" on the Air card; the demo button lived only in Insights, so a 2-minute judge may never see the model's outlook on tomorrow's card.
+2. **Presentation / Idea:** the personal model is the headline, but a first visit shows "Log at least 14 days…" on the Air card; the demo button lived only in Insights, so a 2-minute judge may never see the model's outlook on tomorrow's card.
 3. (Not fixable by Hark) GitHub Pages still off, so the README "Live demo" link 404s. Aariv must switch it on (AARIV-TODO).
 
 | Shipped | Detail |
 |---|---|
 | Any-city search (`js/places.js`, Air tab) | "Or find any city" box → Open-Meteo Geocoding API (free, no key, CORS; verified 2026-10-11). Up to 5 choices, biggest place first, labelled "City, Region, Country"; one match is picked directly. The chosen city joins the Location menu and persists. Clear messages for no match and for a search outage (keeps the current city), 8 s timeout. EN + ES. Service worker precaches the new file; stamp `be-102b11e056`. |
-| One-tap AI preview on the Air card | When the model isn't ready and no demo is loaded, the personal-outlook box shows **See it work on SYNTHETIC demo data**. One tap loads the same seeded 75-day synthetic set as Insights, the outlook shows its band + % with a purple **SYNTHETIC demo data** pill (replaces the old "(demo)" suffix), and focus moves to the result. Removing demo data in Insights brings the button back. |
+| One-tap model preview on the Air card | When the model isn't ready and no demo is loaded, the personal-outlook box shows **See it work on SYNTHETIC demo data**. One tap loads the same seeded 75-day synthetic set as Insights, the outlook shows its band + % with a purple **SYNTHETIC demo data** pill (replaces the old "(demo)" suffix), and focus moves to the result. Removing demo data in Insights brings the button back. |
 
 Checks: `node --test tests/*.test.js` 58 → **63/63** (new `tests/places.test.js`: URL encoding/language, ranking on a real saved "London" answer, malformed input, labels, EN/ES strings). `CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py` 83 → **99/99** (new 390 px flow: demo button → band + SYNTHETIC tag → removable; London search → 5 choices → forecast fetched at lat 51.5085 → persists after reload; no-match and 503 messages; Spanish labels; back to a preset city; no overflow; 44 px targets; no JS errors). Screenshot `tests/screenshots/place-search.png` reviewed.
 
 Not changed: Devpost draft (untouched), onepager.pdf (doesn't mention city search yet), gallery images.
+
+## Cycle 4 · Sat Nov 21, 2026 (in-app verification suite + adversarial audit fixes)
+
+| Change | Detail |
+|---|---|
+| Verification and benchmarks section (`#verify`, `js/benchmark.js`) | New nav tab and in-page deterministic suite (built Nov 15): golden AQI vectors checked against published EPA breakpoints, a held-out SYNTHETIC model score with three reference baselines (accuracy, Brier vs climatology vs oracle), a 95% uncertainty band on the win margin, per-group pass/fail list, an expandable "every check" detail, and a shareable plain-text report (copy + TXT download). Recomputed on the device each run; nothing fetched. EN + ES i18n for every key. Cached into the PWA shell. |
+| De-AI copy pass | "How the AI works" -> "How the personal model works" (EN + ES), footer "(AI x Healthcare)" -> "(Health + Data)", the AI-assistance line trimmed in docs. The model itself is unchanged (logistic regression on the user's own check-ins). |
+| Input hardening | `aqi.category()` refuses negative/fractional AQI instead of silently bucketing -1 as Good. `forecast.maxOzone8h()` requires 8 consecutive clock hours (a gapped series can no longer average hours 1, 2 and 47). `forecast.pollenLevel()` refuses non-map types. `zones.peakFlowPercent()`/`zoneFromPercent()`/`thresholds()` refuse non-numeric, negative and 'Infinity' inputs. `zones.assess()`/`zoneFromSymptoms()` treat a non-array symptoms field as none. `store.place()` caps saved labels at 120 chars; plan text fields at 2000. |
+| Audit fix: print leak | The printed plan is one Letter page of plan only, but `#verify` (added after the print hide list) dumped ~3,270 chars of benchmark internals onto it. `#verify` added to the `@media print` hide list; regression asserted in `benchmark.test.js` U6 and verified with `emulate_media('print')`. |
+| Audit fix: ICS overflow | `?today=9999-12-31` passed `validDay`, and `+1 day` rolled into a 5-digit year, emitting `DTSTART;VALUE=DATE:+01000001` (invalid RFC 5545). `validDay` now caps the year at 2200; boundary rows added to the ?today= table test. |
+| Audit fix: pollen level clamp | A hand-edited saved row with `pollenLevel: 99` fell through i18n and printed the raw key `pollen_99` on the plan card. `store.entry()` now drops pollen values outside the named 0-3 levels; regression rows in `store.test.js`. |
+| Audit fix: 911 tap target | `.btn-911` was 40 px while every other control meets 44 px; now `min-height: 44px` (WCAG 2.5.8 was already met at the 24 px AA floor). |
+| Audit fix: e2e harness | String `wait_for_function` predicates re-polled through the page's `eval()`, which `script-src 'self' 'unsafe-inline'` blocks (EvalError, run-dependent). All 36 predicates in `e2e.py`, `lang_flash.py` and `print_test.py` converted to arrow functions; e2e now completes every run. Stale `h2` count 5 -> 6 for the new section. |
+
+Checks: `node --test tests/*.test.js` **151/151** (new rows in `store.test.js`, U6/U7/U8 in `benchmark.test.js`).
+`python3 tests/e2e.py` **142/142** end-to-end (previously crashed mid-run). A 13-check headless pass at
+1280x800 and 390x844 confirms the in-page suite reports "0 failed", zero console/page errors, no horizontal
+overflow in any state, and `#verify` hidden in print. Stamp `be-a4fa6f0939`.

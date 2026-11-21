@@ -24,20 +24,29 @@
 
   /** Percent of personal best, rounded down to a whole percent (null if inputs invalid). */
   function peakFlowPercent(peakFlow, personalBest) {
+    // Only finite numbers are accepted. Number('') is 0 and Number([]) is 0, both already
+    // refused; Number('  ') is also 0. A string like 'Infinity' or a boolean is not a reading.
+    if (typeof peakFlow !== 'number' && typeof peakFlow !== 'string') return null;
+    if (typeof personalBest !== 'number' && typeof personalBest !== 'string') return null;
+    if (typeof peakFlow === 'string' && !peakFlow.trim()) return null;
+    if (typeof personalBest === 'string' && !personalBest.trim()) return null;
     var pf = Number(peakFlow), best = Number(personalBest);
     if (!isFinite(pf) || !isFinite(best) || pf <= 0 || best <= 0) return null;
     return Math.floor((pf / best) * 100 + 1e-9);
   }
 
   function zoneFromPercent(pct) {
-    if (pct == null) return null;
+    // A non-numeric or negative percent must not silently mean the red zone.
+    if (pct == null || typeof pct !== 'number' || !isFinite(pct) || pct < 0) return null;
     if (pct >= 80) return 'green';
     if (pct >= 50) return 'yellow';
     return 'red';
   }
 
   function zoneFromSymptoms(symptoms) {
-    var s = symptoms || [];
+    // A hand-edited saved row can carry a string or an object where the app expects a list.
+    // Treat anything that is not a real array as "no symptoms" instead of throwing.
+    var s = Array.isArray(symptoms) ? symptoms : [];
     var has = function (list) { return s.some(function (x) { return list.indexOf(x) !== -1; }); };
     if (has(DANGER_SIGNS) || has(RED_SYMPTOMS)) return 'red';
     if (has(YELLOW_SYMPTOMS)) return 'yellow';
@@ -57,15 +66,18 @@
    */
   function assess(input) {
     input = input || {};
+    var sym = Array.isArray(input.symptoms) ? input.symptoms : [];
     var pct = peakFlowPercent(input.peakFlow, input.personalBest);
     var byPF = zoneFromPercent(pct);
-    var bySym = zoneFromSymptoms(input.symptoms);
-    var danger = (input.symptoms || []).some(function (x) { return DANGER_SIGNS.indexOf(x) !== -1; });
+    var bySym = zoneFromSymptoms(sym);
+    var danger = sym.some(function (x) { return DANGER_SIGNS.indexOf(x) !== -1; });
     return { zone: worse(byPF, bySym), percent: pct, byPeakFlow: byPF, bySymptoms: bySym, danger: danger };
   }
 
   /** Peak-flow numbers that mark the zone boundaries for a given personal best. */
   function thresholds(personalBest) {
+    if (typeof personalBest !== 'number' && typeof personalBest !== 'string') return null;
+    if (typeof personalBest === 'string' && !personalBest.trim()) return null;
     var best = Number(personalBest);
     if (!isFinite(best) || best <= 0) return null;
     return { greenMin: Math.ceil(best * 0.8), yellowMin: Math.ceil(best * 0.5) };

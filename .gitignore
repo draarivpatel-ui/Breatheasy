@@ -1,3 +1,4 @@
 tests/screenshots/
 __pycache__/
 .cycle-lock
+node_modules/

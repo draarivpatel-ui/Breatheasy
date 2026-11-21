@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var AQI = window.BE_AQI, Z = window.BE_Zones, F = window.BE_Forecast, M = window.BE_Model,
-    G = window.BE_Guidance, P = window.BE_Places, FC = window.BE_FcCache, DEMO = window.BE_Demo, V = window.BE_Validate, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share, ST = window.BE_Store;
+    G = window.BE_Guidance, P = window.BE_Places, FC = window.BE_FcCache, DEMO = window.BE_Demo, V = window.BE_Validate, BM = window.BE_Benchmark, ICS = window.BE_ICS, I = window.BE_I18N, SH = window.BE_Share, ST = window.BE_Store;
 
   var KEY = 'breatheeasy.v1', DEMO_KEY = 'breatheeasy.demo.v1', FC_KEY = 'breatheeasy.forecast.v1';
   var PLACES = {
@@ -40,6 +40,8 @@
   var explainDate = null; // day picked in "Explain a past day"
   var trustWaiting = false;
   var trustResult = null; // SYNTHETIC model check, computed once (it never uses the user's data)
+  var benchResult = null; // deterministic benchmark report, computed on demand (also no user data)
+  var benchRunning = false;
 
   // Allow a fixed "today" for demos/tests: ?today=YYYY-MM-DD
   var qs = new URLSearchParams(location.search);
@@ -599,12 +601,103 @@
       ece: (rel.ece * 100).toFixed(1), mp: Math.round(rel.meanP * 100), ob: Math.round(rel.observed * 100) });
   }
 
+  /* ---------- Verification / benchmarks: an interactive, deterministic suite ---------- */
+  function fmtNum(v) {
+    if (v == null) return '-';
+    if (typeof v === 'string') return v.length > 42 ? v.slice(0, 40) + '...' : v;
+    if (typeof v === 'boolean') return v ? t('verify_pass') : t('verify_fail');
+    return Math.abs(v) < 1 && v !== 0 ? v.toFixed(3) : String(v);
+  }
+  function verifyRow(row) {
+    var tr = el('tr');
+    [row.label || row.id, fmtNum(row.actual), fmtNum(row.baseline != null ? row.baseline : row.expected),
+      row.threshold || (row.tolerance === 0 ? 'exact match' : 'within ' + fmtNum(row.tolerance)),
+      row.pass ? t('verify_pass') : t('verify_fail')].forEach(function (v, i) {
+      var cell = el(i === 0 ? 'th' : 'td', i === 0 ? { scope: 'row' } : null, String(v));
+      tr.appendChild(cell);
+    });
+    tr.className = row.pass ? 'vpass' : 'vfail';
+    return tr;
+  }
+  function renderBenchmark() {
+    var status = $('#verify-status');
+    if (benchRunning) { status.textContent = t('verify_running'); return; }
+    if (!benchResult) { status.textContent = ''; return; }
+    var r = benchResult, m = r.model, s = m.summary, rel = m.reliability, u = m.uncertainty;
+    status.textContent = t('verify_result', { passed: r.passed, total: r.total, failed: r.failed });
+    status.className = 'status ' + (r.failed ? 'status-warn' : '');
+    var score = $('#verify-score');
+    score.textContent = r.failed ? t('verify_some_failed') : t('verify_pass_all');
+    score.className = 'verify-score ' + (r.failed ? 'is-fail' : 'is-pass');
+    $('#verify-summary').hidden = false;
+    $('#verify-baseline').textContent = t('verify_baseline', { label: r.baseline });
+    var ul = $('#verify-groups'); ul.innerHTML = '';
+    r.groups.forEach(function (g) {
+      ul.appendChild(el('li', { class: g.failed.length ? 'vfail' : 'vpass' },
+        t('verify_group', { name: g.name, passed: g.passed, total: g.total })));
+    });
+    $('#verify-uncertainty').textContent = t('verify_uncertainty', { acc: (u.accuracy * 100).toFixed(1), margin: (u.margin * 100).toFixed(1) });
+    $('#verify-failure').textContent = t('verify_failure');
+
+    var mt = $('#verify-model-rows'); mt.innerHTML = '';
+    m.checks.concat(m.regression).forEach(function (c) { mt.appendChild(verifyRow(c)); });
+    $('#verify-model').hidden = false;
+    $('#verify-model-note').textContent = t('verify_model_note', {
+      n: s.n, people: r.model.people, acc: (s.accuracy * 100).toFixed(1), base: (s.baselineAccuracy * 100).toFixed(1),
+      brier: s.brier.toFixed(3), clim: s.brierClimatology.toFixed(3), oracle: s.brierOracle.toFixed(3)
+    });
+    // Accessible bar chart: the same numbers are in the table above, so the bars stay decorative.
+    var bars = $('#verify-bars'); bars.innerHTML = '';
+    [{ k: t('legend_model'), v: s.accuracy }, { k: t('legend_base'), v: s.baselineAccuracy },
+      { k: t('legend_best'), v: s.oracleAccuracy }].forEach(function (b, i) {
+      var item = el('div', { class: 'vbar-row' });
+      item.appendChild(el('span', { class: 'vbar-lab' }, b.k));
+      var track = el('span', { class: 'vbar-track' });
+      var fill = el('span', { class: 'vbar-fill vbar-' + i });
+      fill.style.width = Math.round(Math.max(0, Math.min(1, b.v)) * 100) + '%';
+      track.appendChild(fill); item.appendChild(track);
+      item.appendChild(el('span', { class: 'vbar-val' }, Math.round(b.v * 100) + '%'));
+      bars.appendChild(item);
+    });
+
+    var det = $('#verify-detail-rows'); det.innerHTML = '';
+    // One table per group keeps the many rows readable and lets a screen reader announce each group.
+    var byGroup = {};
+    r.vectors.forEach(function (v) { (byGroup[v.group] = byGroup[v.group] || []).push(v); });
+    Object.keys(byGroup).forEach(function (g) {
+      det.appendChild(el('h4', null, g + ' (' + byGroup[g].filter(function (v) { return v.pass; }).length + '/' + byGroup[g].length + ')'));
+      var tb = el('table', { class: 'sr-table verify-table' });
+      var cap = el('caption', { class: 'sr-only' }, g); tb.appendChild(cap);
+      var head = el('thead'), hr = el('tr');
+      [t('verify_col_check'), t('verify_col_actual'), t('verify_col_baseline'), t('verify_col_bound'), t('verify_col_result')].forEach(function (h) {
+        hr.appendChild(el('th', { scope: 'col' }, h));
+      });
+      head.appendChild(hr); tb.appendChild(head);
+      var body = el('tbody');
+      byGroup[g].forEach(function (v) { body.appendChild(verifyRow(v)); });
+      tb.appendChild(body); det.appendChild(tb);
+    });
+    $('#verify-report').textContent = BM.reportText(r);
+  }
+  function runBenchmark(focus) {
+    if (benchRunning) return;
+    benchRunning = true; renderBenchmark();
+    // Defer with a timeout so the status message paints before the synchronous number crunching.
+    setTimeout(function () {
+      try { benchResult = BM.run(); }
+      catch (e) { benchResult = null; $('#verify-status').textContent = String(e && e.message || e); }
+      benchRunning = false;
+      renderBenchmark();
+      if (focus) { var n = $('#verify-score'); n.setAttribute('tabindex', '-1'); n.focus(); }
+    }, 20);
+  }
+
   /** Tabs row: mark it when more tabs sit off the right edge (CSS fades that edge). */
   function tabCue() {
     var r = $('.tabs-row'); if (!r) return;
     r.classList.toggle('more', r.scrollLeft + r.clientWidth < r.scrollWidth - 2);
   }
-  function renderAll() { applyI18n(); tabCue(); renderThresholds(); renderPlanCard(); renderStrip(); renderInsights(); renderTrust(); }
+  function renderAll() { applyI18n(); tabCue(); renderThresholds(); renderPlanCard(); renderStrip(); renderInsights(); renderTrust(); renderBenchmark(); }
 
   /* ---------- export / print ---------- */
   function download(name, mime, text) {
@@ -691,6 +784,24 @@
       $('#pc-risk').setAttribute('tabindex', '-1'); $('#pc-risk').focus();
     });
     $('#place-form').addEventListener('submit', onPlaceSearch);
+    $('#verify-run').addEventListener('click', function () { runBenchmark(true); });
+    $('#verify-detail').addEventListener('click', function () {
+      var box = $('#verify-detail-box'), open = box.hidden;
+      box.hidden = !open;
+      this.setAttribute('aria-expanded', String(open));
+      this.textContent = t(open ? 'verify_hide_detail' : 'verify_show_detail');
+    });
+    $('#verify-copy').addEventListener('click', function () {
+      var msg = $('#verify-status'), text = $('#verify-report').textContent;
+      if (!text) { runBenchmark(false); return; }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { msg.textContent = t('verify_copied'); }, function () { msg.textContent = t('verify_copy_fail'); });
+      } else msg.textContent = t('verify_copy_fail');
+    });
+    $('#verify-export').addEventListener('click', function () {
+      if (!benchResult) { runBenchmark(false); return; }
+      download('breatheeasy-benchmark.txt', 'text/plain', BM.reportText(benchResult));
+    });
     $('#explain-date').addEventListener('change', function () { explainDate = this.value; renderExplain(trained()); });
     $('#ics').addEventListener('click', onIcs);
     $('#share').addEventListener('click', onShare);

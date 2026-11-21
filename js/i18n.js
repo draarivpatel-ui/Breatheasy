@@ -155,7 +155,25 @@
     data_h: 'Your data', data_note: 'Everything stays in this browser (localStorage). There is no account or server, and nothing is tracked.',
     export: 'Export my data (JSON)', wipe: 'Delete all my data', wipe_confirm: 'Delete your plan and all check-ins from this device?', wiped: 'All data deleted.',
     sources_h: 'Sources', limits_h: 'Limits',
-    footer: 'Built for DSH Hacks V2 (AI \u00d7 Healthcare). Not medical advice.'
+    // Nov 15 benchmark / verification section
+    nav_verify: 'Verification', verify_h: 'Verification and benchmarks',
+    verify_intro: 'Every number below is recomputed from the code on this device. Golden vectors are compared with published EPA breakpoints and action-plan cut-offs; the model score uses made-up people with a known pattern. Nothing here is fetched from a server.',
+    verify_run: 'Run the full suite', verify_running: 'Running the deterministic suite...',
+    verify_result: '{passed} of {total} checks passed. {failed} failed.',
+    verify_pass_all: 'All checks passed', verify_some_failed: 'Some checks failed',
+    verify_group: '{name}: {passed} of {total} passed',
+    verify_col_check: 'Check', verify_col_actual: 'Measured', verify_col_baseline: 'Baseline', verify_col_bound: 'Pass condition', verify_col_result: 'Result',
+    verify_pass: 'PASS', verify_fail: 'FAIL',
+    verify_baseline: 'Compared with: {label}. AQI vectors must match exactly. Model scores may drift only inside the stated tolerance.',
+    verify_uncertainty: 'Uncertainty: 95 percent band on accuracy is plus or minus {acc} points; the combined win margin is {margin} points. A baseline win only counts when the gap clears that margin.',
+    verify_failure: 'Failure conditions: any golden-vector mismatch, calibration error at or above 6 points, Brier not beating climatology by 0.03, accuracy not clearing the uncertainty band, or a score drifting past its pinned tolerance.',
+    verify_limits: 'Scope: published EPA thresholds and SYNTHETIC data with a known answer. This is an engineering check, not a clinical validation.',
+    verify_export: 'Download report (TXT)', verify_copy: 'Copy report', verify_copied: 'Report copied to the clipboard', verify_copy_fail: 'Copy failed. The full report is shown below.',
+    verify_report_h: 'Shareable report', verify_scope: 'Deterministic. Same code, same numbers, every run.',
+    verify_detail_h: 'All checks', verify_show_detail: 'Show every check', verify_hide_detail: 'Hide every check',
+    verify_model_h: 'Held-out model score, with three reference baselines',
+    verify_model_note: '{n} held-out SYNTHETIC days after the training window, {people} made-up people. Accuracy {acc}% against {base}% for always guessing the common answer; Brier {brier} against {clim} for the base-rate guess and {oracle} for the best possible score.',
+    footer: 'Built for DSH Hacks V2 (Health + Data). Not medical advice.'
   };
 
   var es = {
@@ -306,7 +324,38 @@
     data_h: 'Tus datos', data_note: 'Todo se queda en este navegador (localStorage). No hay cuenta ni servidor, y no se rastrea nada.',
     export: 'Exportar mis datos (JSON)', wipe: 'Borrar todos mis datos', wipe_confirm: '\u00bfBorrar tu plan y todos tus registros de este dispositivo?', wiped: 'Se borraron todos los datos.',
     sources_h: 'Fuentes', limits_h: 'L\u00edmites',
-    footer: 'Hecho para DSH Hacks V2 (IA \u00d7 Salud). No es consejo m\u00e9dico.'
+    nav_verify: 'Verificaci\u00f3n',
+    verify_h: 'Verificaci\u00f3n y pruebas de referencia',
+    verify_intro: 'Cada n\u00famero de esta secci\u00f3n se calcula de nuevo con el c\u00f3digo del dispositivo. Los vectores fijos se comparan con los puntos de corte publicados de la EPA y del plan de acci\u00f3n; la puntuaci\u00f3n del modelo usa personas inventadas con un patr\u00f3n conocido. Nada se consulta en un servidor.',
+    verify_run: 'Ejecutar la serie completa',
+    verify_running: 'Ejecutando la serie determinista...',
+    verify_result: '{passed} de {total} comprobaciones correctas. {failed} fallaron.',
+    verify_pass_all: 'Todo correcto',
+    verify_some_failed: 'Hubo fallos',
+    verify_group: '{name}: {passed} de {total} correctas',
+    verify_col_check: 'Comprobaci\u00f3n',
+    verify_col_actual: 'Medido',
+    verify_col_baseline: 'Referencia',
+    verify_col_bound: 'Condici\u00f3n para aprobar',
+    verify_col_result: 'Resultado',
+    verify_pass: 'CORRECTO',
+    verify_fail: 'FALLO',
+    verify_baseline: 'Comparaci\u00f3n: {label}. Los vectores del ICA deben coincidir exactamente. Las puntuaciones del modelo solo pueden variar dentro de la tolerancia indicada.',
+    verify_uncertainty: 'Incertidumbre: la banda del 95 por ciento sobre los aciertos es de m\u00e1s o menos {acc} puntos; el margen combinado para ganar es de {margin} puntos. Una ventaja solo cuenta si supera ese margen.',
+    verify_failure: 'Condiciones de fallo: cualquier diferencia en un vector fijo, error de calibraci\u00f3n de 6 puntos o m\u00e1s, Brier que no mejore en 0,03 a la climatolog\u00eda, aciertos que no superen la banda de incertidumbre o una puntuaci\u00f3n fuera de la tolerancia fijada.',
+    verify_limits: 'Alcance: umbrales publicados de la EPA y datos SINT\u00c9TICOS con respuesta conocida. Es una comprobaci\u00f3n de ingenier\u00eda, no una validaci\u00f3n cl\u00ednica.',
+    verify_export: 'Descargar informe (TXT)',
+    verify_copy: 'Copiar informe',
+    verify_copied: 'Informe copiado al portapapeles',
+    verify_copy_fail: 'No se pudo copiar. El informe completo est\u00e1 m\u00e1s abajo.',
+    verify_report_h: 'Informe para compartir',
+    verify_scope: 'Determinista. Mismo c\u00f3digo, mismos n\u00fameros, en cada ejecuci\u00f3n.',
+    verify_detail_h: 'Todas las comprobaciones',
+    verify_show_detail: 'Mostrar cada comprobaci\u00f3n',
+    verify_hide_detail: 'Ocultar cada comprobaci\u00f3n',
+    verify_model_h: 'Puntuaci\u00f3n con d\u00edas reservados y tres referencias',
+    verify_model_note: '{n} d\u00edas SINT\u00c9TICOS reservados despu\u00e9s del entrenamiento, {people} personas inventadas. Aciertos {acc}% frente a {base}% al adivinar siempre la respuesta m\u00e1s com\u00fan; Brier {brier} frente a {clim} al adivinar la tasa habitual y {oracle} para lo mejor posible.',
+    footer: 'Hecho para DSH Hacks V2 (Salud + Datos). No es consejo m\u00e9dico.'
   };
 
   function t(lang, key, params) {

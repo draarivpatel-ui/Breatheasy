@@ -37,15 +37,30 @@
   function maxOzone8h(times, ozone, date) {
     var best = null;
     for (var i = 0; i < times.length; i++) {
-      if (times[i].slice(0, 10) !== date) continue;
+      if (typeof times[i] !== 'string' || times[i].slice(0, 10) !== date) continue;
       if (+times[i].slice(11, 13) < 7) continue;
       if (i + 8 > times.length) break;
+      // The 8 samples must be consecutive clock hours. A response with a gap (a missing hour,
+      // a daylight-saving jump, or a truncated series) must not average hours 1, 2 and 47 together.
+      var contiguous = true;
+      for (var k = 1; k < 8; k++) {
+        if (hourDiff(times[i + k - 1], times[i + k]) !== 1) { contiguous = false; break; }
+      }
+      if (!contiguous) continue;
       var win = ozone.slice(i, i + 8).filter(isNum);
       if (win.length < 6) continue;
       var m = win.reduce(function (a, b) { return a + b; }, 0) / win.length;
       if (best == null || m > best) best = m;
     }
     return best;
+  }
+
+  /** Whole hours between two Open-Meteo local timestamps, or NaN when either is malformed. */
+  function hourDiff(a, b) {
+    if (typeof a !== 'string' || typeof b !== 'string') return NaN;
+    var da = new Date(a + ':00Z'), db = new Date(b + ':00Z');
+    if (isNaN(da.getTime()) || isNaN(db.getTime())) return NaN;
+    return (db.getTime() - da.getTime()) / 3600000;
   }
 
   /**
@@ -100,7 +115,8 @@
   };
   var TYPE_GROUP = { alder: 'tree', birch: 'tree', olive: 'tree', grass: 'grass', mugwort: 'weed', ragweed: 'weed' };
   function pollenLevel(pollen) {
-    if (!pollen) return null;
+    // A string, a list or a number is not a pollen map; a hand-edited saved copy can contain one.
+    if (!pollen || typeof pollen !== 'object' || Array.isArray(pollen)) return null;
     var lvl = 0;
     Object.keys(pollen).forEach(function (k) {
       var g = NAB[TYPE_GROUP[k]]; var v = pollen[k];

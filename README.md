@@ -17,7 +17,7 @@ When a kid gets diagnosed with asthma, the doctor hands the family a paper **ast
 
 It works in English and Spanish on phones and laptops. There is no account, no backend server, and no tracking; everything stays in your browser's `localStorage`.
 
-Built for **DSH Hacks V2** (theme: AI x Healthcare).
+Built for **DSH Hacks V2** (theme: Health + Data).
 
 > **Not medical advice.** BreatheEasy helps you follow the plan your doctor wrote. It does not diagnose, prescribe, or replace medical care. Trouble walking or talking from shortness of breath, or lips or fingernails that are blue, pale, or gray: call 911 (CDC Asthma Action Plan, 2024).
 
@@ -30,7 +30,7 @@ Built for **DSH Hacks V2** (theme: AI x Healthcare).
 3. Run the tests (Node 18+, no install):
    ```bash
    git clone https://github.com/draarivpatel-ui/Breatheasy && cd Breatheasy
-   npm test        # node --test; ends with "# pass 126" and "# fail 0"
+   npm test        # node --test; ends with "# pass 151" and "# fail 0"
    ```
    Optional: `python3 tests/e2e.py` (Playwright) runs 142 headless-Chromium checks against saved real API responses.
 
@@ -84,7 +84,7 @@ The action plan sits in a kitchen drawer while the forecast sits on a weather we
 - Tomorrow card with AQI badge in EPA colors, category, main pollutant, ozone ppb, PM2.5 µg/m³, pollen, high temperature
 - 4-day strip (today + 3)
 - Locations: Sugar Land, Houston, Pasadena, device geolocation, or **any city in the world** by name (Open-Meteo Geocoding API, free, no key; biggest matches first, up to 5 choices; the choice is remembered on this device). The AQI is always computed with the U.S. EPA method, wherever the city is
-- **One-tap AI preview**: on a first visit the personal-outlook box on the Air card offers *See it work on SYNTHETIC demo data*, so the model's outlook appears right on tomorrow's card (with a purple SYNTHETIC tag) without opening Insights; *Remove demo data* in Insights takes it away
+- **One-tap model preview**: on a first visit the personal-outlook box on the Air card offers *See it work on SYNTHETIC demo data*, so the model's outlook appears right on tomorrow's card (with a purple SYNTHETIC tag) without opening Insights; *Remove demo data* in Insights takes it away
 - Daily check-in to zone, % of personal best, your plan's steps for that zone, 911 / doctor call buttons
 - My plan: personal best (with the zone cut-offs computed live), green / yellow / red text, pre-exercise medicine, doctor's phone, known triggers
 - Insights: model status, explanation for tomorrow, learned weights, held-out evaluation with Brier score, recent history
@@ -126,10 +126,10 @@ Useful URL parameters: `?demo=1` loads the labelled synthetic demo; `?today=YYYY
 
 ## Tests
 
-Last run Oct 13, 2026 (GitHub Actions run 38490294861 on d311c5d, headless Chromium): **126/126 unit tests and 526/526 browser checks passing (142 end-to-end, 220 axe-core, 60 edge-input, 48 saved-data, 42 print, 14 language-flash)**. GitHub Actions (`.github/workflows/tests.yml`) runs every suite below on every push to `main`.
+Last verified Nov 15, 2026 on this machine: **151/151 unit and DOM tests passing, 0 failures** (`node --test tests/*.test.js`). The Nov 15 suite adds 25 checks in `tests/benchmark.test.js` for the benchmark engine, the interactive Verification section, engine edge cases, EN/ES parity and responsive CSS. Earlier browser suites (526 checks: 142 end-to-end, 220 axe-core, 60 edge-input, 48 saved-data, 42 print, 14 language-flash) were run Oct 13, 2026 in CI on the prior base and are unchanged in scope. GitHub Actions (`.github/workflows/tests.yml`) runs every suite below on every push to `main`. See [DEVPOST_UPGRADE.md](DEVPOST_UPGRADE.md) for the prior base vs Nov 15 change log.
 
 ```bash
-node --test tests/*.test.js                          # 126 unit tests: AQI math (incl. every worked example in EPA's AQI Technical Assistance Document), zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics (UTF-8 byte folding at 75 octets, EN/ES), share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish), EN/ES "Why BreatheEasy" parity (same model inputs as js/model.js, same numbers and links), and every number quoted on the submitted Devpost page re-computed from the code (tests/devpost-claims.test.js), and a table of saved data from an older or hand-edited copy (js/store.js: a string, a list, an unknown language or place, bad diary rows dropped one by one, impossible ?today= dates), and the link preview (Open Graph + large Twitter card with a real 1280x800 screenshot), and every relative link in this README resolves to a file in the repo (tests/readme-paths.test.js)
+node --test tests/*.test.js                          # 151 unit + DOM tests: the deterministic benchmark / validation suite (`tests/benchmark.test.js`, 25 checks), AQI math (incl. every worked example in EPA's AQI Technical Assistance Document), zones, forecast parsing, 8 s Open-Meteo timeout (AbortController), per-place forecast cache (429 / timeout fallback, 30 min / 3 h limits, EN/ES "as of" labels), model, explain-a-day, SYNTHETIC calibration + sensitivity, PWA manifest / service worker / cache-busting stamp, guidance, i18n, .ics (UTF-8 byte folding at 75 octets, EN/ES), share note, city search (URL, ranking, labels, same-looking places told apart by county or coordinates), EN/ES key parity (same keys and placeholders, no English copied into Spanish), EN/ES "Why BreatheEasy" parity (same model inputs as js/model.js, same numbers and links), and every number quoted on the submitted Devpost page re-computed from the code (tests/devpost-claims.test.js), and a table of saved data from an older or hand-edited copy (js/store.js: a string, a list, an unknown language or place, bad diary rows dropped one by one, impossible ?today= dates), and the link preview (Open Graph + large Twitter card with a real 1280x800 screenshot), and every relative link in this README resolves to a file in the repo (tests/readme-paths.test.js)
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py # 142 headless-Chromium checks (pip install playwright)
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/axe_states.py # 220 checks: axe-core 0 violations in 11 states (first load, demo, check-in errors/saved, plan errors/saved, city results/not found/search down, forecast 429, offline) x 390/1280 px x EN/ES, again after switching language mid-flow
 CHROMIUM_PATH=/usr/bin/chromium python3 tests/axe_baseline.py # 10 checks: WCAG 2.2 AA + best-practice axe-core guard at 360/1280 px, incl. target-size (WCAG 2.5.8, off by default in axe): fails only on a serious/critical violation not in the Oct 12, 2026 audit baseline
@@ -143,6 +143,20 @@ LIVE=1 CHROMIUM_PATH=/usr/bin/chromium python3 tests/e2e.py   # also hits the re
 
 - Unit tests use EPA's own worked examples from the [AQI Technical Assistance Document](https://document.airnow.gov/technical-assistance-document-for-the-reporting-of-daily-air-quailty.pdf) (8-h ozone 0.07853333 ppm gives AQI 126; ozone 0.078 ppm + PM2.5 35.9 µg/m³ gives 126 and 102, AQI 126 with ozone as the main pollutant), the 17-period 8-hour ozone rule, every breakpoint edge, and the saved real Open-Meteo response.
 - The e2e test routes Open-Meteo calls to the fixtures and checks real flows: tomorrow's AQI 140 / orange card, the user's pre-exercise text appearing on a USG day, check-in zones (75 % gives yellow, danger sign gives red + 911), demo model recovering the planted pattern, .ics download, the coach/nurse share note, the labelled logged-pollen carry-over, Spanish, persistence across reload, labels and accessible names, no horizontal overflow at 390 px, 40 px+ touch targets, no JS errors, no network calls except Open-Meteo, and the API-failure message. It also checks the explain-a-day view (8 rows, odds multipliers, the "before" prediction, Explain buttons), the SYNTHETIC trust card (reliability plot, 6-size sensitivity table, Brier line), and, over a local http server, the installable/offline flow: manifest served, service worker in control, one cache named with the current hash, no forecast API cached, and an offline reload that still renders tomorrow's card with the offline note. A 429 section answers Open-Meteo with "rate limit exceeded" after a good load and checks the saved forecast stays on screen labelled "as of 45 min ago" / "de hace 45 min", then that a 3 h 15 min old copy is dropped for a clear no-data message. A slow/offline section holds the Open-Meteo requests unanswered and checks the app gives up after about 8 s, keeps the saved forecast on screen with "didn't answer within 8 seconds" / "no respondió en 8 segundos" and its age, shows a no-data message naming the timeout when nothing is saved, recovers on Refresh, and with the network cut answers at once with the "You're offline" / "sin conexión" note while keeping the last result.
+
+## Verification and benchmarks (Nov 15)
+
+The **Verification** tab is a real, interactive benchmark suite, not a static claim. Click **Run the full suite** and the same pure engine (`js/benchmark.js`) that `node --test tests/benchmark.test.js` runs recomputes 76 checks in the browser and shows the result, group by group, with the numbers in accessible tables and a decorative bar chart.
+
+- **Golden vectors (65 checks)**: EPA AQI breakpoints, NHLBI zone cut-offs, calendar-date and saved-state guards, and forecast parsing are compared with independently pinned expected values. AQI vectors must match **exactly**; a mutation in any engine breaks a named check.
+- **Held-out model score (11 checks)**: on 1,200 SYNTHETIC days that come after the training window, accuracy is 75.1% against 51.8% for always guessing the common answer; Brier 0.172 against 0.252 for the base-rate guess and 0.157 for the best possible score. Three reference baselines, not one.
+- **Explicit failure conditions**: calibration error at or above 6 points, Brier not beating climatology by 0.03, accuracy not clearing the combined uncertainty band, or a score drifting past its pinned tolerance fails the suite.
+- **Uncertainty bounds**: the 95 percent binomial band on accuracy is plus or minus 2.8 points; the combined win margin is 5.3 points. A baseline win only counts when the gap clears that margin (it is 23.3 points here).
+- **Comparison with the prior base**: metrics are pinned to the Nov 14, 2026 release with per-metric tolerances, so a regression is visible even when every check still passes.
+- **Shareable view**: **Copy report** and **Download report (TXT)** export the same deterministic plain-text summary; the full text is also on the page in a keyboard-focusable region, and the print stylesheet keeps the report legible on Letter paper.
+- **Accessible and responsive**: every control is a real button, the result is a polite status region, the detail toggle uses `aria-expanded` / `aria-controls`, every number appears twice (bar and table), and the 375 px layout stacks buttons and wraps any long label with `overflow-wrap: anywhere`.
+
+The suite is deterministic (same code, same numbers, every run), uses no clock reads, no network calls and no user data, and is explicitly scoped to published thresholds and SYNTHETIC data. It is an engineering check, not a clinical validation.
 
 ## Files
 
@@ -158,6 +172,8 @@ js/guidance.js      which cited guidance lines apply
 js/model.js         on-device logistic regression + explanations + evaluation
 js/demo.js          seeded SYNTHETIC demo generator
 js/validate.js      SYNTHETIC model check: reliability, Brier, sensitivity to logged days
+js/benchmark.js     deterministic benchmark / validation suite: golden vectors, baseline comparisons, failure bounds
+DEVPOST_UPGRADE.md  prior base vs Nov 15 enhancements, with verified test counts
 sw.js               service worker (offline, cache-busting by content hash)
 manifest.webmanifest, icons/   install metadata + app icons
 scripts/stamp.js    writes the content hash into sw.js and index.html

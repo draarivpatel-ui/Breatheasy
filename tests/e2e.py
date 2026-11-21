@@ -70,7 +70,7 @@ with sync_playwright() as p:
     calls = wire(pg)
     print('Desktop flow')
     pg.goto(APP + '?today=2026-10-09')
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     check('title', 'BreatheEasy' in pg.title())
     check('requested both Open-Meteo APIs', any('air-quality-api' in c for c in calls) and any('api.open-meteo.com/v1/forecast' in c for c in calls), calls)
     check('tomorrow AQI 140 (ozone 0.0826 -> 0.082 ppm truncated, EPA method)', pg.inner_text('#pc-aqi .aqi-num') == '140', pg.inner_text('#pc-aqi .aqi-num'))
@@ -164,7 +164,7 @@ with sync_playwright() as p:
     pg.locator('#explain').screenshot(path=str(SHOTS / 'explain-day.png'))
 
     # SYNTHETIC calibration + sensitivity check
-    pg.wait_for_function("document.querySelectorAll('#sens-table tbody tr').length > 0")
+    pg.wait_for_function("() => document.querySelectorAll('#sens-table tbody tr').length > 0")
     check('trust card tagged SYNTHETIC', 'SYNTHETIC' in pg.inner_text('#trust .synth-tag'))
     check('reliability plot: diagonal + dots + 5-bin table', pg.locator('#rel-chart svg .diag').count() == 1 and pg.locator('#rel-chart svg circle').count() >= 3 and pg.locator('#rel-table tbody tr').count() == 5)
     check('sensitivity: 6 sizes (14..90 days) with lines for model/baseline/best', pg.locator('#sens-table tbody tr').count() == 6 and pg.locator('#sens-chart svg polyline').count() == 3)
@@ -218,7 +218,7 @@ with sync_playwright() as p:
 
     # persistence
     pg.reload()
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     check('plan persists after reload', pg.input_value('#p-best') == '400')
     check('demo persists and stays labelled', not pg.is_hidden('#demo-banner'))
     pg.click('#demo-toggle')
@@ -233,7 +233,7 @@ with sync_playwright() as p:
     check('every form control has a label', not unlabeled, unlabeled)
     nameless = pg.evaluate("() => [...document.querySelectorAll('button,a')].filter(b => !(b.textContent.trim() || b.getAttribute('aria-label'))).length")
     check('every button/link has an accessible name', nameless == 0, nameless)
-    check('one h1 + an h2 per section', pg.locator('h1').count() == 1 and pg.locator('main section > h2, main section .section-head > h2').count() == 5)
+    check('one h1 + an h2 per section', pg.locator('h1').count() == 1 and pg.locator('main section > h2, main section .section-head > h2').count() == 6)
     check('skip link targets main', pg.get_attribute('.skip', 'href') == '#main')
 
     # wipe
@@ -252,7 +252,7 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: m_err.append(str(e)))
     wire(pg)
     pg.goto(APP + '?today=2026-10-10&demo=1')
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     check('tomorrow (Oct 11) AQI 64 Moderate', pg.inner_text('#pc-aqi .aqi-num') == '64' and pg.inner_text('#pc-cat') == 'Moderate', pg.inner_text('#pc-aqi .aqi-num'))
     check('?demo=1 loads labelled synthetic data', 'SYNTHETIC' in pg.inner_text('#demo-banner'))
     sw = pg.evaluate('document.documentElement.scrollWidth')
@@ -266,7 +266,7 @@ with sync_playwright() as p:
     check('no JS errors on mobile', not m_err, m_err)
     ctx.close()
 
-    # ---------- first visit: one-tap demo of the AI + any-city search (390px) ----------
+    # ---------- first visit: one-tap demo of the personal model + any-city search (390px) ----------
     print('One-tap demo + any-city search')
     ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
     pg = ctx.new_page(); s_err = []
@@ -274,7 +274,7 @@ with sync_playwright() as p:
     pg.on('console', lambda m: s_err.append(m.text) if m.type == 'error' and 'Failed to load resource' not in m.text else None)  # the simulated 503 logs one
     scalls = wire(pg)
     pg.goto(APP + '?today=2026-10-10')
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     check('first visit: outlook locked, demo button offered on the Air card', '14 days' in pg.inner_text('#pc-risk') and pg.is_visible('#try-demo') and 'SYNTHETIC' in pg.inner_text('#try-demo'))
     pg.click('#try-demo')
     check('one tap: personal outlook shows a band + SYNTHETIC tag', pg.locator('#pc-risk .risk').count() == 1 and 'SYNTHETIC' in pg.inner_text('#pc-risk .demo-tag'), pg.inner_text('#pc-risk'))
@@ -282,7 +282,7 @@ with sync_playwright() as p:
     pg.click('#demo-toggle')
     check('removing demo brings the button back', pg.is_visible('#try-demo') and pg.locator('#pc-risk .risk').count() == 0)
     pg.fill('#place-q', 'London'); pg.click('#place-form button[type=submit]')
-    pg.wait_for_function("document.querySelectorAll('#place-results button').length > 0")
+    pg.wait_for_function("() => document.querySelectorAll('#place-results button').length > 0")
     names = pg.locator('#place-results button').all_inner_texts()
     check('city search: 5 choices, biggest first', len(names) == 5 and names[0] == 'London, England, United Kingdom' and names[1] == 'London, Ontario, Canada', names)
     check('city search used Open-Meteo Geocoding in English', any('geocoding-api.open-meteo.com' in c and 'name=London' in c and 'language=en' in c for c in scalls))
@@ -293,20 +293,20 @@ with sync_playwright() as p:
     pg.locator('#today').screenshot(path=str(SHOTS / 'place-search.png'))
     n_before = len(scalls)
     pg.click('#place-results button >> nth=0')
-    pg.wait_for_function("document.querySelector('#fc-status').textContent === ''")
+    pg.wait_for_function("() => document.querySelector('#fc-status').textContent === ''")
     new = scalls[n_before:]
     check('picking London fetches its forecast (lat 51.5085)', any('air-quality-api' in c and 'latitude=51.5085' in c for c in new) and any('/v1/forecast' in c and 'latitude=51.5085' in c for c in new), new)
     check('location menu now shows the chosen city', pg.eval_on_selector('#loc', 'e => e.options[e.selectedIndex].text') == 'London, England, United Kingdom' and 'London' in pg.inner_text('#place-msg'))
     n_before = len(scalls)
     pg.reload()
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     check('chosen city persists after reload', pg.input_value('#loc') == 'search' and pg.eval_on_selector('#loc', 'e => e.options[e.selectedIndex].text') == 'London, England, United Kingdom')
     check('reload within 30 min reuses that city\'s saved forecast (no new API call) and says so', not any('air-quality-api' in c for c in scalls[n_before:]) and 'saved on this device (as of' in pg.inner_text('#fc-status'), (scalls[n_before:], pg.inner_text('#fc-status')))
     pg.fill('#place-q', 'Zzqx'); pg.press('#place-q', 'Enter')
-    pg.wait_for_function("document.querySelector('#place-msg').textContent.includes('No place')")
+    pg.wait_for_function("() => document.querySelector('#place-msg').textContent.includes('No place')")
     check('no match: plain message, no buttons', pg.locator('#place-results li').count() == 0)
     pg.fill('#place-q', 'Fail'); pg.press('#place-q', 'Enter')
-    pg.wait_for_function("document.querySelector('#place-msg').textContent.includes('not available')")
+    pg.wait_for_function("() => document.querySelector('#place-msg').textContent.includes('not available')")
     check('search outage: says so and keeps the current city', 'London, England' in pg.inner_text('#place-msg') and pg.input_value('#loc') == 'search', pg.inner_text('#place-msg'))
     pg.select_option('#lang', 'es')
     check('Spanish search labels + demo button', pg.inner_text('#place-q-label') == 'O busca cualquier ciudad' and 'SINTÉTICOS' in pg.inner_text('#try-demo'))
@@ -314,10 +314,10 @@ with sync_playwright() as p:
     check('ES: city-search outage message re-worded in Spanish, no English or raw HTTP text', 'no está disponible' in pm and 'error 503' in pm and not any(w in pm for w in ('not available', 'City search', 'HTTP', 'We kept')), pm)
     check('ES: search placeholder and button in Spanish', pg.get_attribute('#place-q', 'placeholder') == 'p. ej., Phoenix, Delhi, Londres' and pg.inner_text('#place-form button[type=submit]') == 'Buscar')
     pg.fill('#place-q', 'Zzqx'); pg.press('#place-q', 'Enter')
-    pg.wait_for_function("document.querySelector('#place-msg').textContent.includes('No encontramos')")
+    pg.wait_for_function("() => document.querySelector('#place-msg').textContent.includes('No encontramos')")
     check('ES: no-match message in Spanish', 'No encontramos' in pg.inner_text('#place-msg') and 'No place' not in pg.inner_text('#place-msg'), pg.inner_text('#place-msg'))
     pg.fill('#place-q', 'Slow'); pg.press('#place-q', 'Enter')
-    pg.wait_for_function("document.querySelector('#place-msg').textContent.includes('8 segundos')", timeout=20000)
+    pg.wait_for_function("() => document.querySelector('#place-msg').textContent.includes('8 segundos')", timeout=20000)
     pm = pg.inner_text('#place-msg')
     check('ES: city-search 8 s timeout worded in Spanish (no "City search")', 'no respondió en 8 segundos' in pm and 'City search' not in pm and 'didn' not in pm, pm)
     for r in HELD_GEO:
@@ -328,7 +328,7 @@ with sync_playwright() as p:
     check('ES: no horizontal overflow at 390px (search messages + SYNTHETIC button)', sw <= 390, sw)
     # strict-judge round 2: very long names wrap inside the 390 px column, same-looking places are told apart
     pg.fill('#place-q', 'Springfield'); pg.press('#place-q', 'Enter')
-    pg.wait_for_function("document.querySelectorAll('#place-results button').length === 5")
+    pg.wait_for_function("() => document.querySelectorAll('#place-results button').length === 5")
     names = pg.locator('#place-results button').all_inner_texts()
     check('long-name results: 5 distinct labels (county added to same-looking Springfields)', len(set(names)) == 5 and 'Springfield, Greene, Missouri, United States' in names and 'Springfield, Webster, Missouri, United States' in names, names)
     sw = pg.evaluate('document.documentElement.scrollWidth')
@@ -340,7 +340,7 @@ with sync_playwright() as p:
     check('results list is named by the "pick your city" line', pg.evaluate("() => document.querySelector('#place-results').getAttribute('aria-labelledby')") == 'place-msg')
     pg.locator('#place-form').screenshot(path=str(SHOTS / 'place-search-long-es.png'))
     pg.locator('#place-results button', has_text='Llanfair').click()
-    pg.wait_for_function("document.querySelector('#loc').value === 'search' && document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#loc').value === 'search' && document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     sw = pg.evaluate('document.documentElement.scrollWidth')
     check('ES 390px: after picking the 58-letter city, the Location menu does not widen the page', sw <= 390, sw)
     # strict-judge round 2: Spanish tabs overflow the 390 px row -> faded right edge until scrolled to the end
@@ -353,10 +353,10 @@ with sync_playwright() as p:
     check('ES 390px: forecast values get most of the card width (label column capped)', fw >= 0.55, fw)
     pg.locator('#today').screenshot(path=str(SHOTS / 'place-search-es.png'))
     pg.select_option('#loc', 'sugarland')
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     check('switching back to a preset city works (its own saved forecast, labelled in Spanish)', any('latitude=29.6197' in c for c in scalls) and 'guardado en este dispositivo (de hace' in pg.inner_text('#fc-status'), pg.inner_text('#fc-status'))
     pg.click('#refresh')
-    pg.wait_for_function("document.querySelector('#fc-status').textContent === ''")
+    pg.wait_for_function("() => document.querySelector('#fc-status').textContent === ''")
     check('Refresh skips the saved copy and asks Open-Meteo again', any('air-quality-api' in c and 'latitude=29.6197' in c for c in scalls[-2:]), scalls[-2:])
     check('no JS errors in search/demo flow', not s_err, s_err)
     ctx.close()
@@ -381,11 +381,11 @@ with sync_playwright() as p:
     pg = ctx.new_page(); p_err = []
     pg.on('pageerror', lambda e: p_err.append(str(e)))
     pg.goto(base + '?today=2026-10-10')
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     man = pg.evaluate("fetch(document.querySelector('link[rel=manifest]').href).then(r => r.json())")
     check('manifest served and parsed', man.get('display') == 'standalone' and len(man.get('icons', [])) >= 3, man)
-    pg.wait_for_function("navigator.serviceWorker && navigator.serviceWorker.ready.then(() => true)", timeout=15000)
-    pg.reload(); pg.wait_for_function("!!navigator.serviceWorker.controller", timeout=15000)
+    pg.wait_for_function("() => navigator.serviceWorker && navigator.serviceWorker.ready.then(() => true)", timeout=15000)
+    pg.reload(); pg.wait_for_function("() => !!navigator.serviceWorker.controller", timeout=15000)
     check('service worker controls the page', pg.evaluate('!!navigator.serviceWorker.controller'))
     caches = pg.evaluate('caches.keys()')
     ver = pg.evaluate("document.querySelector('link[rel=stylesheet]').href.split('?v=')[1]")
@@ -394,7 +394,7 @@ with sync_playwright() as p:
     check('app shell precached with ?v= URLs; no forecast API cached', any('js/app.js?v=' + ver in u for u in cached) and not any('open-meteo' in u for u in cached), len(cached))
     ctx.set_offline(True); net['offline'] = True
     pg.reload()
-    pg.wait_for_function("document.querySelector('#fc-status').textContent.length > 0", timeout=15000)
+    pg.wait_for_function("() => document.querySelector('#fc-status').textContent.length > 0", timeout=15000)
     check('offline reload: app still loads from the cache', 'BreatheEasy' in pg.title() and pg.inner_text('#pc-aqi .aqi-num') == '64', pg.inner_text('#pc-aqi .aqi-num'))
     check('offline note names the saved forecast', 'offline' in pg.inner_text('#fc-status').lower(), pg.inner_text('#fc-status'))
     pg.screenshot(path=str(SHOTS / 'offline-mobile.png'), full_page=False)
@@ -408,7 +408,7 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: f_err.append(str(e)))
     wire(pg, 'fail')
     pg.goto(APP + '?today=2026-10-10')
-    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('limit')")
+    pg.wait_for_function("() => document.querySelector('#fc-status').textContent.includes('limit')")
     check('rate-limit reason shown to the user (in our own EN/ES wording)', 'too many requests (rate limit reached)' in pg.inner_text('#fc-status'), pg.inner_text('#fc-status'))
     check('no data at all: clear message, no AQI number', 'No air-quality data for Sugar Land, TX' in pg.inner_text('#fc-status') and pg.inner_text('#pc-aqi .aqi-num') == '-', pg.inner_text('#fc-status'))
     check('no crash on API failure', not f_err, f_err)
@@ -426,11 +426,11 @@ with sync_playwright() as p:
         route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=body)
     pg.route('**/*open-meteo.com/**', r_handle)
     pg.goto(APP + '?today=2026-10-10')
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     age = "(m) => { const k = 'breatheeasy.fccache.v1'; const c = JSON.parse(localStorage.getItem(k)); Object.values(c).forEach(e => e.savedAt -= m * 60000); localStorage.setItem(k, JSON.stringify(c)); }"
     pg.evaluate(age, 45); mode['v'] = '429'
     pg.reload()
-    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('Open-Meteo')")
+    pg.wait_for_function("() => document.querySelector('#fc-status').textContent.includes('Open-Meteo')")
     st = pg.inner_text('#fc-status')
     check('429 with a 45-min-old answer: forecast still shown', pg.inner_text('#pc-aqi .aqi-num') == '64', pg.inner_text('#pc-aqi .aqi-num'))
     check('429 status names the rate limit and says "as of 45 min ago"', 'too many requests' in st and 'as of 45 min ago' in st, st)
@@ -443,7 +443,7 @@ with sync_playwright() as p:
     pg.select_option('#lang', 'en')
     pg.evaluate(age, 150)  # now 3 h 15 min old: past the fallback limit
     pg.reload()
-    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('No air-quality data')")
+    pg.wait_for_function("() => document.querySelector('#fc-status').textContent.includes('No air-quality data')")
     check('after 3 h the old answer is dropped: no AQI, clear no-data message', pg.inner_text('#pc-aqi .aqi-num') == '-' and 'last 3 hours' in pg.inner_text('#fc-status'), pg.inner_text('#fc-status'))
     check('no JS errors in the 429 flow', not r_err, r_err)
     ctx.close()
@@ -463,10 +463,10 @@ with sync_playwright() as p:
         route.fulfill(status=200, content_type='application/json', headers={'access-control-allow-origin': '*'}, body=body)
     pg.route('**/*open-meteo.com/**', n_handle)
     pg.goto(APP + '?today=2026-10-10')
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     pg.evaluate(age, 40); nmode['v'] = 'hang'
     t0 = time.time(); pg.reload()
-    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('8 seconds')", timeout=20000)
+    pg.wait_for_function("() => document.querySelector('#fc-status').textContent.includes('8 seconds')", timeout=20000)
     took = time.time() - t0; st = pg.inner_text('#fc-status')
     check('hung Open-Meteo: app gives up after ~8 s (not sooner, not never)', 7.0 <= took <= 15.0, round(took, 1))
     check('hung Open-Meteo requests were really made (and held)', any('air-quality-api' in r.request.url for r in held), len(held))
@@ -479,7 +479,7 @@ with sync_playwright() as p:
     pg.select_option('#lang', 'en')
     pg.evaluate("localStorage.removeItem('breatheeasy.fccache.v1')")
     pg.reload()
-    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('No air-quality data')", timeout=20000)
+    pg.wait_for_function("() => document.querySelector('#fc-status').textContent.includes('No air-quality data')", timeout=20000)
     st = pg.inner_text('#fc-status')
     check('timeout with nothing saved: no AQI, no-data message names the timeout', pg.inner_text('#pc-aqi .aqi-num') == '-' and '8 seconds' in st, st)
     for r in held:
@@ -487,12 +487,12 @@ with sync_playwright() as p:
         except Exception: pass
     held.clear()
     nmode['v'] = 'ok'; pg.click('#refresh')
-    pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
+    pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-'")
     check('back online: Refresh brings the forecast back', pg.inner_text('#pc-aqi .aqi-num') == '64')
     pg.evaluate(age, 40)
     ctx.set_offline(True); nmode['v'] = 'down'
     t0 = time.time(); pg.click('#refresh')
-    pg.wait_for_function("document.querySelector('#fc-status').textContent.includes('offline')", timeout=10000)
+    pg.wait_for_function("() => document.querySelector('#fc-status').textContent.includes('offline')", timeout=10000)
     took = time.time() - t0; st = pg.inner_text('#fc-status')
     check('offline Refresh: answers at once (no 8 s wait)', took < 4, round(took, 1))
     check('offline: last result kept (AQI 64) with an offline note and its age', pg.inner_text('#pc-aqi .aqi-num') == '64' and 'You\u2019re offline' in st and 'as of 40 min ago' in st, st)
@@ -509,7 +509,7 @@ with sync_playwright() as p:
         ctx = browser.new_context(); pg = ctx.new_page()
         pg.goto(APP)
         try:
-            pg.wait_for_function("document.querySelector('#pc-aqi .aqi-num').textContent !== '-' || document.querySelector('#fc-status').textContent.length > 20", timeout=20000)
+            pg.wait_for_function("() => document.querySelector('#pc-aqi .aqi-num').textContent !== '-' || document.querySelector('#fc-status').textContent.length > 20", timeout=20000)
             txt = pg.inner_text('#pc-aqi .aqi-num')
             check('live forecast renders a numeric AQI', txt.isdigit(), pg.inner_text('#fc-status'))
         except Exception as e:

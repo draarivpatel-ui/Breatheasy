@@ -28,7 +28,7 @@
   (function () { try { var st = JSON.parse(localStorage.getItem('breatheeasy.v1') || 'null');
     var l = st && (st.lang === 'en' || st.lang === 'es') ? st.lang : ((navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en');
     if (l === 'es') { document.documentElement.lang = 'es'; document.documentElement.classList.add('i18n-wait'); } } catch (e) {} })();</script>
-  <link rel="stylesheet" href="styles.css?v=be-560fa2974b">
+  <link rel="stylesheet" href="styles.css?v=be-a4fa6f0939">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to main content</a>
@@ -71,6 +71,7 @@
       <a href="#checkin" data-i18n="nav_checkin">Check in</a>
       <a href="#plan" data-i18n="nav_plan">My plan</a>
       <a href="#insights" data-i18n="nav_insights">Insights</a>
+      <a href="#verify" data-i18n="nav_verify">Verification</a>
       <a href="#about" data-i18n="nav_about">About</a>
     </div>
   </nav>
@@ -301,6 +302,50 @@
       </div>
     </section>
 
+    <!-- VERIFICATION / BENCHMARKS -->
+    <section id="verify" aria-labelledby="verify-h">
+      <div class="section-head">
+        <h2 id="verify-h" data-i18n="verify_h">Verification and benchmarks</h2>
+        <span class="verify-tag" data-i18n="verify_scope">Deterministic. Same code, same numbers, every run.</span>
+      </div>
+      <p class="fine" data-i18n="verify_intro">Every number below is recomputed from the code on this device.</p>
+      <div class="card verify-card" id="verify-card">
+        <div class="verify-actions no-print">
+          <button type="button" class="btn" id="verify-run" data-i18n="verify_run">Run the full suite</button>
+          <button type="button" class="btn ghost" id="verify-copy" data-i18n="verify_copy">Copy report</button>
+          <button type="button" class="btn ghost" id="verify-export" data-i18n="verify_export">Download report (TXT)</button>
+          <button type="button" class="btn ghost" id="verify-detail" aria-expanded="false" aria-controls="verify-detail-box" data-i18n="verify_show_detail">Show every check</button>
+        </div>
+        <p id="verify-status" class="status" role="status" aria-live="polite"></p>
+        <div id="verify-summary" class="verify-summary" hidden>
+          <p class="verify-score" id="verify-score"></p>
+          <p class="fine" id="verify-baseline"></p>
+          <ul id="verify-groups" class="verify-groups" aria-label="Check groups"></ul>
+          <p class="fine" id="verify-uncertainty"></p>
+          <p class="fine" id="verify-failure"></p>
+          <p class="fine" data-i18n="verify_limits">Scope: published EPA thresholds and SYNTHETIC data with a known answer.</p>
+        </div>
+        <div class="card verify-model" id="verify-model" hidden>
+          <h3 data-i18n="verify_model_h">Held-out model score, with three reference baselines</h3>
+          <div class="verify-bars" id="verify-bars" aria-hidden="true"></div>
+          <table class="sr-table verify-table">
+            <caption class="sr-only" data-i18n="verify_model_h"></caption>
+            <thead><tr><th scope="col" data-i18n="verify_col_check">Check</th><th scope="col" data-i18n="verify_col_actual">Measured</th><th scope="col" data-i18n="verify_col_baseline">Baseline</th><th scope="col" data-i18n="verify_col_bound">Pass condition</th><th scope="col" data-i18n="verify_col_result">Result</th></tr></thead>
+            <tbody id="verify-model-rows"></tbody>
+          </table>
+          <p class="fine" id="verify-model-note"></p>
+        </div>
+        <div id="verify-detail-box" class="verify-detail" hidden>
+          <h3 data-i18n="verify_detail_h">All checks</h3>
+          <div id="verify-detail-rows"></div>
+        </div>
+        <div class="verify-report">
+          <h3 data-i18n="verify_report_h">Shareable report</h3>
+          <pre id="verify-report" class="verify-pre" tabindex="0" aria-label="Shareable report"></pre>
+        </div>
+      </div>
+    </section>
+
     <!-- ABOUT -->
     <section id="about" aria-labelledby="about-h">
       <h2 id="about-h" data-i18n="about_h">Background</h2>
@@ -308,7 +353,7 @@
         <p>About <strong>4.8 million U.S. children (6.7%)</strong> have asthma right now, and <strong>47%</strong> of them had at least one asthma attack in the past year (CDC, 2023 National Health Interview Survey). Doctors hand families a paper <strong>asthma action plan</strong> with green, yellow and red zones, but it rarely gets connected to tomorrow's air.</p>
         <p>That matters in Houston. The American Lung Association's <em>State of the Air 2026</em> ranks the Houston-Pasadena metro <strong>6th worst in the nation for ozone</strong>, with Harris County averaging <strong>43.3 weighted unhealthy ozone days a year</strong> (2022 to 2024 data). EPA lists people with asthma and children and teenagers among the groups most sensitive to ozone.</p>
         <p>BreatheEasy puts the plan and the forecast on one screen: it computes tomorrow's AQI from the forecast using EPA's breakpoints, shows EPA's advice for that level, puts <em>your doctor's own words</em> next to it, and learns from your check-ins which conditions tend to come before your rough days.</p>
-        <h3>How the "AI" works</h3>
+        <h3>How the personal model works</h3>
         <p>A logistic-regression model trains in your browser on your own check-ins (a day is "rough" if you were in the yellow or red zone). Inputs: ozone AQI, PM2.5 AQI, pollen level, high temperature, humidity, and whether yesterday was rough. It shows its learned weights, explains each prediction feature by feature, and reports an honest held-out accuracy next to a naive baseline. It needs at least 14 days with some good and some rough days before it says anything. You can open any past day to see what it weighed, and a <strong>SYNTHETIC</strong> self-check on made-up people shows how well its percentages match reality and how it improves with more logged days. It finds patterns in <em>your</em> data; it does not diagnose and it is not a medical device.</p>
         <h3 data-i18n="limits_h">Limits</h3>
         <ul>
@@ -321,7 +366,7 @@
         <p>Cerca de <strong>4.8 millones de niños en EE. UU. (6.7%)</strong> tienen asma actualmente, y el <strong>47%</strong> tuvo al menos un ataque de asma en el último año (CDC, Encuesta Nacional de Salud 2023). Los médicos dan a las familias un <strong>plan de acción para el asma</strong> en papel con zonas verde, amarilla y roja, pero casi nunca se conecta con el aire de mañana.</p>
         <p>Eso importa en Houston. El informe <em>State of the Air 2026</em> de la American Lung Association ubica al área de Houston-Pasadena como <strong>la 6.ª peor del país en ozono</strong>, con un promedio de <strong>43.3 días ponderados de ozono insalubre al año</strong> en el condado de Harris (datos 2022 a 2024). La EPA incluye a las personas con asma y a los niños y adolescentes entre los grupos más sensibles al ozono.</p>
         <p>BreatheEasy pone el plan y el pronóstico en una sola pantalla: calcula el ICA de mañana con los puntos de corte de la EPA, muestra el consejo de la EPA para ese nivel, coloca <em>las palabras de tu médico</em> al lado y aprende de tus registros qué condiciones suelen venir antes de tus días difíciles.</p>
-        <h3>Cómo funciona la "IA"</h3>
+        <h3>Cómo funciona el modelo personal</h3>
         <p>Un modelo de regresión logística se entrena en tu navegador con tus propios registros (un día es "difícil" si estuviste en zona amarilla o roja). Datos de entrada: ICA de ozono, ICA de PM2.5, nivel de polen, temperatura máxima, humedad y si el día anterior fue difícil. Muestra los pesos que aprendió, explica cada predicción factor por factor y reporta una precisión honesta con días que no usó para entrenar, junto a una línea base simple. Necesita al menos 14 días, con algunos días buenos y algunos difíciles, antes de dar un pronóstico. Puedes abrir cualquier día pasado para ver qué tomó en cuenta, y una autoevaluación <strong>SINTÉTICA</strong> con personas inventadas muestra qué tan bien coinciden sus porcentajes con la realidad y cómo mejora con más días registrados. Encuentra patrones en <em>tus</em> datos; no diagnostica y no es un dispositivo médico.</p>
         <h3 data-i18n="limits_h">Límites</h3>
         <ul>
@@ -365,21 +410,22 @@
     </section>
   </main>
 
-  <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (AI × Healthcare). Not medical advice.</p></div></footer>
+  <footer class="foot"><div class="wrap"><p data-i18n="footer">Built for DSH Hacks V2 (Health + Data). Not medical advice.</p></div></footer>
 
-  <script src="js/aqi.js?v=be-560fa2974b"></script>
-  <script src="js/zones.js?v=be-560fa2974b"></script>
-  <script src="js/forecast.js?v=be-560fa2974b"></script>
-  <script src="js/fccache.js?v=be-560fa2974b"></script>
-  <script src="js/model.js?v=be-560fa2974b"></script>
-  <script src="js/guidance.js?v=be-560fa2974b"></script>
-  <script src="js/demo.js?v=be-560fa2974b"></script>
-  <script src="js/validate.js?v=be-560fa2974b"></script>
-  <script src="js/ics.js?v=be-560fa2974b"></script>
-  <script src="js/share.js?v=be-560fa2974b"></script>
-  <script src="js/places.js?v=be-560fa2974b"></script>
-  <script src="js/i18n.js?v=be-560fa2974b"></script>
-  <script src="js/store.js?v=be-560fa2974b"></script>
-  <script src="js/app.js?v=be-560fa2974b"></script>
+  <script src="js/aqi.js?v=be-a4fa6f0939"></script>
+  <script src="js/zones.js?v=be-a4fa6f0939"></script>
+  <script src="js/forecast.js?v=be-a4fa6f0939"></script>
+  <script src="js/fccache.js?v=be-a4fa6f0939"></script>
+  <script src="js/model.js?v=be-a4fa6f0939"></script>
+  <script src="js/guidance.js?v=be-a4fa6f0939"></script>
+  <script src="js/demo.js?v=be-a4fa6f0939"></script>
+  <script src="js/validate.js?v=be-a4fa6f0939"></script>
+  <script src="js/benchmark.js?v=be-a4fa6f0939"></script>
+  <script src="js/ics.js?v=be-a4fa6f0939"></script>
+  <script src="js/share.js?v=be-a4fa6f0939"></script>
+  <script src="js/places.js?v=be-a4fa6f0939"></script>
+  <script src="js/i18n.js?v=be-a4fa6f0939"></script>
+  <script src="js/store.js?v=be-a4fa6f0939"></script>
+  <script src="js/app.js?v=be-a4fa6f0939"></script>
 </body>
 </html>
